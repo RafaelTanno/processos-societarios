@@ -140,6 +140,7 @@ integração**, que roda as chamadas reais e diz exatamente o que falta configur
 
 ## Segredos
 
+
 `web/config.js` é versionado de propósito: `tenantId` e `clientId` são públicos
 numa página estática. Segredo de verdade (chave do Cosmos, `clientState` do
 webhook) vai nas **configurações do Static Web App**, nunca no repositório.
