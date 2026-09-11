@@ -1,0 +1,55 @@
+# Publicação no Azure Static Web Apps.
+#
+# O Azure normalmente cria este arquivo sozinho quando você conecta o Static Web
+# App ao repositório — se ele fizer isso, use o que o Azure gerou e apague este.
+# Ele está aqui para o caso de você criar o recurso pelo CLI, e para deixar
+# explícito onde ficam a ferramenta (web/) e a API (api/).
+#
+# O segredo AZURE_STATIC_WEB_APPS_API_TOKEN é criado automaticamente pelo Azure
+# nas Settings → Secrets do repositório. Não coloque nada dele aqui.
+
+name: Publicar no Azure Static Web Apps
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches: [main]
+
+jobs:
+  publicar:
+    if: github.event_name == 'push' || github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    name: Publicar
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Conferir a sintaxe do JavaScript antes de publicar
+        run: |
+          for f in web/js/*.js web/dados/*.js web/config.js api/src/**/*.js api/index.js; do
+            node --check "$f" || exit 1
+          done
+          echo "sintaxe ok"
+
+      - name: Build e deploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: "web"      # a ferramenta
+          api_location: "api"      # as Azure Functions
+          output_location: ""      # sem build: publica os arquivos como estão
+
+  fechar_previa:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: Encerrar ambiente de pré-visualização
+    steps:
+      - uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: close

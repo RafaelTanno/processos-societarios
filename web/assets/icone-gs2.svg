@@ -1,0 +1,7 @@
+<!-- Ícone da marca GS2. Geometria medida no manual: quadrado com o quadrante
+     inferior-esquerdo removido e o canto inferior-direito arredondado em 27%.
+     Usa currentColor para servir em verde, verde-escuro ou branco conforme o
+     fundo, como o manual determina. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="currentColor" role="img" aria-label="GS2">
+  <path d="M0 0 H100 V73 A27 27 0 0 1 73 100 H50 V50 H0 Z"/>
+</svg>

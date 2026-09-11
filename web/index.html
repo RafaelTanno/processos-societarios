@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GS2 — Processos Societários</title>
+<!-- Manual da marca, seção "Avatar": em tamanho pequeno usa-se só o ícone —
+     a marca completa fica irreconhecível. -->
+<link rel="icon" href="assets/icone-gs2.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+
+
+<!-- ================= LOGIN ================= -->
+<div id="loginScreen">
+
+  <!-- Painel da marca: foto em preto e branco, moldura de canto arredondado e a
+       frase em verde claro, itálico light — o sistema visual do manual da GS2.
+       Some em telas estreitas, onde só o cartão de acesso importa. -->
+  <div class="login-marca" aria-hidden="true">
+    <img class="login-marca-logo" src="assets/logo-gs2-branco.png" alt="">
+    <div class="login-moldura"></div>
+    <p class="login-frase">Nosso negócio<br>é ligar você aos<br>seus objetivos</p>
+  </div>
+
+  <div class="login-acesso">
+  <div class="login-card">
+    <img class="logo" src="assets/logo-gs2.png" alt="GS2 Negócios">
+    <h1>Processos Societários</h1>
+    <p class="sub">Acesso restrito · GS2 Negócios</p>
+
+    <div class="login-tabs">
+      <button class="login-tab ativa" id="abaGS2" onclick="App.abaLogin('gs2')">Usuário GS2</button>
+      <button class="login-tab" id="abaCliente" onclick="App.abaLogin('cliente')">Cliente</button>
+    </div>
+
+    <div class="login-pane" id="paneGS2">
+      <div class="field">
+        <label for="loginEmailGS2">E-mail corporativo</label>
+        <input type="email" id="loginEmailGS2" placeholder="nome@gs2negocios.com.br" autocomplete="username"
+               onkeydown="if(event.key==='Enter')App.entrarGS2()">
+      </div>
+      <button class="btn-entrar" id="btnEntrarGS2" onclick="App.entrarGS2()">Entrar</button>
+      <p class="login-hint">É a mesma conta do e-mail e do SharePoint da GS2 — não existe senha separada nesta ferramenta.</p>
+    </div>
+
+    <div class="login-pane" id="paneCliente" hidden>
+      <div class="field">
+        <label for="loginEmailCliente">E-mail cadastrado</label>
+        <input type="email" id="loginEmailCliente" placeholder="seu.email@empresa.com.br" autocomplete="username"
+               onkeydown="if(event.key==='Enter')App.entrarCliente()">
+      </div>
+      <button class="btn-entrar" id="btnEntrarCliente" onclick="App.entrarCliente()">Entrar</button>
+      <p class="login-hint">Acesso aos documentos societários das empresas liberadas para você pela GS2.</p>
+    </div>
+
+    <div class="login-erro" id="loginErro" hidden></div>
+    <div class="login-modo" id="loginModo"></div>
+  </div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app">
+  <header class="topbar">
+    <div class="left">
+      <img class="logo" src="assets/logo-gs2.png" alt="GS2">
+      <div class="crumb" id="crumbTopo">Área do Colaborador &nbsp;/&nbsp; <b>Processos Societários</b></div>
+    </div>
+    <div class="right">
+      <div class="selo-ambiente demo" id="seloAmbiente" onclick="App.abrirDiagnostico()"><span class="dot"></span>Modo demonstração</div>
+      <div class="icon-btn2">🔔</div>
+      <div class="icon-btn2">❓</div>
+      <div class="user-chip">
+        <div class="avatar2">V</div>
+        <div><div class="name">Vinícius</div><div class="role">Colaborador GS2</div></div>
+      </div>
+      <button class="btn-logout" onclick="App.logout()">Sair</button>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <div class="sidebar">
+      <div class="group-label">Ferramenta</div>
+      <div class="nav-item active" data-view="painel" onclick="App.navigate('painel')"><span class="ic">📊</span> Painel</div>
+      <div class="nav-item" data-view="clientes" onclick="App.navigate('clientes')"><span class="ic">🏛️</span> Painel de Clientes</div>
+      <div class="nav-item nav-sub" data-view="socios" onclick="App.navigate('socios')"><span class="ic">👤</span> Cadastro de Sócios</div>
+      <div class="nav-item" data-view="novo" onclick="App.navigate('novo')"><span class="ic">➕</span> Novo Processo</div>
+      <div class="nav-item" data-view="processos" onclick="App.navigate('processos')"><span class="ic">📋</span> Meus Processos</div>
+      <div class="group-label">Tipos de processo</div>
+      <div class="nav-item" onclick="App.navigate('novo','abertura')"><span class="ic">🏢</span> Abertura de Empresa</div>
+      <div class="nav-item" onclick="App.navigate('novo','alteracao')"><span class="ic">🔄</span> Alteração Societária</div>
+      <div class="nav-item" onclick="App.navigate('novo','filial')"><span class="ic">🏬</span> Abertura de Filial</div>
+      <div class="nav-item" onclick="App.navigate('novo','baixa')"><span class="ic">🔻</span> Baixa de Empresa</div>
+      <div class="nav-item" onclick="App.navigate('novo','outros')"><span class="ic">📁</span> Outros Eventos</div>
+      <div class="group-label">Configurações</div>
+      <div class="nav-item" data-view="templates" onclick="App.navigate('templates')"><span class="ic">📄</span> Modelos de Contrato</div>
+
+      <div id="adminNavGroup" style="display:none;">
+        <div class="group-label">Administração</div>
+        <div class="nav-item" data-view="admin-tabelas" onclick="App.navigate('admin-tabelas')"><span class="ic">🔄</span> Atualização de Tabelas</div>
+        <div class="nav-item" data-view="admin-usuarios" onclick="App.navigate('admin-usuarios')"><span class="ic">👥</span> Usuários</div>
+        <div class="nav-item" data-view="admin-requerentes" onclick="App.navigate('admin-requerentes')"><span class="ic">🪪</span> Requerentes</div>
+        <div class="nav-item" data-view="admin-usuarios-cliente" onclick="App.navigate('admin-usuarios-cliente')"><span class="ic">🔑</span> Usuários de Clientes</div>
+        <div class="nav-item" data-view="admin-importar" onclick="App.navigate('admin-importar')"><span class="ic">📥</span> Importar processos</div>
+        <div class="nav-item" data-view="admin-acervo" onclick="App.navigate('admin-acervo')"><span class="ic">🗂️</span> Acervo do SharePoint</div>
+      </div>
+
+      <div class="sidebar-note">
+        <b>Fase 1 (atual): controle de processos.</b> Login, SharePoint, OCR e acervo são reais; a Junta Comercial (JUCEMAT) fica em <b>acompanhamento manual</b> nesta fase — a ferramenta prepara, você protocola.<br><br>
+        <b>Fase 2 (planejada): automação.</b> Envio e assinatura reais na Junta Comercial e lançamento automático no Domínio ficam para uma etapa futura, após decisões de segurança e confirmações com fornecedores.
+      </div>
+    </div>
+
+    <div class="main">
+
+      <!-- ===== PAINEL ===== -->
+      <div class="view active" id="view-painel">
+        <h2 class="view-title">Painel</h2>
+        <p class="view-sub">Visão geral dos processos societários dos clientes GS2.</p>
+        <div id="bannerSemente"></div>
+        <div class="kpi-row" id="kpiRow"></div>
+        <div class="panel">
+          <div class="panel-head"><h3>Processos recentes</h3><button class="btn ghost" onclick="App.navigate('processos')">Ver todos →</button></div>
+          <div class="panel-body"><table class="tbl" id="dashTable"></table></div>
+        </div>
+      </div>
+
+      <!-- ===== NOVO PROCESSO ===== -->
+      <div class="view" id="view-novo">
+        <h2 class="view-title">Novo Processo Societário</h2>
+        <p class="view-sub">Preencha os dados, anexe os documentos e gere o contrato automaticamente a partir do modelo. O preenchimento é guardado sozinho neste navegador — se a internet cair ou a aba fechar, dá para retomar de onde parou.
+          <a onclick="document.getElementById('fiRascunho').click()" style="cursor:pointer;color:var(--green-dark);font-weight:600;">Abrir rascunho de um arquivo</a>.
+          <input type="file" id="fiRascunho" accept=".json" style="display:none" onchange="App.abrirRascunhoArquivo(this.files)"></p>
+        <div class="aviso-rascunho" id="avisoRascunho" style="display:none;"></div>
+        <div class="stepper" id="stepper"></div>
+        <div class="panel"><div class="panel-body" style="padding-top:18px;">
+
+          <div class="wizard-step active" id="step-1">
+            <h3 style="margin-top:0;color:var(--dark);">1. Tipo de processo</h3>
+            <p class="view-sub" style="margin:-4px 0 12px;">O tipo escolhido aqui define quem pode ser o cliente no passo seguinte e quais dados o formulário vai pedir.</p>
+            <div class="tipo-grid" id="tipoGrid"></div>
+          </div>
+
+          <div class="wizard-step" id="step-2">
+            <h3 style="margin-top:0;color:var(--dark);">2. Selecione o cliente</h3>
+            <div id="clientePick"></div>
+            <div id="minutaBox" style="max-width:560px;"></div>
+          </div>
+
+          <div class="wizard-step" id="step-3">
+            <h3 style="margin-top:0;color:var(--dark);">3. Dados do processo</h3>
+            <div id="dynamicFields"></div>
+          </div>
+
+          <div class="wizard-step" id="step-4">
+            <h3 style="margin-top:0;color:var(--dark);">4. Documentos</h3>
+            <p class="view-sub" style="margin-bottom:14px;">Anexe os documentos abaixo. Alguns tipos de documento passam por <b>leitura automática (OCR)</b> para preencher o contrato sozinhos.</p>
+            <div id="docsList"></div>
+            <h4 style="font-size:13px;margin:18px 0 8px;color:var(--dark);">Outros documentos (opcional)</h4>
+            <div class="extra-drop" id="extraDrop">Arraste arquivos aqui ou clique para selecionar<br><span id="extraFiles"></span></div>
+            <input type="file" id="extraFileInput" multiple style="display:none">
+          </div>
+
+          <div class="wizard-step" id="step-5">
+            <h3 style="margin-top:0;color:var(--dark);">5. Revisão e contrato</h3>
+            <div class="callout"><b>Confira os dados.</b> Compartilhe o resumo abaixo com o cliente antes de seguir para a Junta Comercial. O envio do processo é concluído ao final da etapa 7 — na versão integrada, os documentos e o contrato gerado são salvos automaticamente na pasta do cliente no SharePoint.</div>
+            <div id="reviewContent"></div>
+
+            <div class="panel" style="margin-top:18px;">
+              <div class="panel-head"><h3>Gerar contrato a partir de um modelo</h3></div>
+              <div class="panel-body" style="padding-top:14px;">
+                <div class="field" style="max-width:420px;margin-bottom:14px;">
+                  <label>Modelo de contrato</label>
+                  <select id="tplSelect" onchange="App.renderContractPreview()"></select>
+                </div>
+                <div class="contract-preview" id="contractPreview"></div>
+                <div class="btn-row" style="margin-top:16px;">
+                  <span></span>
+                  <button class="btn dark" onclick="App.gerarContrato()">Gerar e salvar no SharePoint (simulado) →</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="wizard-step" id="step-6">
+            <h3 style="margin-top:0;color:var(--dark);">6. Junta Comercial — protocolo e documentos</h3>
+            <p class="view-sub" style="margin-bottom:14px;">Registre o número do protocolo assim que o processo for protocolado na Junta Comercial (JUCEMAT) e anexe os documentos gerados ao longo da análise.</p>
+            <div class="form-grid" style="margin-bottom:18px;">
+              <div class="field">
+                <label>Requerente da Viabilidade (login gov.br)</label>
+                <select id="juntaRequerente" onchange="App.setJuntaRequerente(this.value)"></select>
+              </div>
+              <div class="field">
+                <label>Número do protocolo (JUCEMAT)</label>
+                <input type="text" id="juntaProtocolo" placeholder="Ex.: MTP0000000000" oninput="App.setJuntaProtocolo(this.value)">
+              </div>
+            </div>
+            <div id="prepJuntaBox"></div>
+            <div id="juntaDocsList"></div>
+            <h4 style="font-size:13px;margin:18px 0 8px;color:var(--dark);">Demais documentos da Junta Comercial (opcional)</h4>
+            <div class="extra-drop" id="juntaExtraDrop">Arraste arquivos aqui ou clique para selecionar<br><span id="juntaExtraFilesLabel"></span></div>
+            <input type="file" id="juntaExtraFileInput" multiple style="display:none">
+          </div>
+
+          <div class="wizard-step" id="step-7">
+            <h3 style="margin-top:0;color:var(--dark);">7. RFB — DBE</h3>
+            <p class="view-sub" style="margin-bottom:14px;">Acompanhe o processamento da DBE (Documento Básico de Entrada) junto à Receita Federal e anexe a DBE deferida assim que aprovada.</p>
+            <div class="field" style="max-width:360px;margin-bottom:18px;">
+              <label>Status de acompanhamento da DBE</label>
+              <select id="rfbDbeStatus" onchange="App.setRfbDbeStatus(this.value)">
+                <option value="pendente">Pendente</option>
+                <option value="andamento">Em andamento</option>
+                <option value="concluido">Concluído</option>
+              </select>
+            </div>
+            <div class="doc-item">
+              <div class="doc-row">
+                <div class="doc-info"><div class="name">DBE deferida</div></div>
+                <div>
+                  <div class="dropzone" id="dz-dbeDeferida" onclick="document.getElementById('fi-dbeDeferida').click()">Arrastar arquivo ou clicar para selecionar</div>
+                  <input type="file" id="fi-dbeDeferida" style="display:none" onchange="App.handleDbeDeferidaFile(this.files)">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="wizard-step" id="step-8">
+            <h3 style="margin-top:0;color:var(--dark);">8. Licenciamentos</h3>
+            <p class="view-sub" style="margin-bottom:14px;">Licenças e cadastros complementares após o registro na Junta Comercial. Marque "não se aplica" quando o item não for necessário para este processo.</p>
+            <div id="licenciamentosList"></div>
+          </div>
+
+          <div class="btn-row" style="align-items:center;">
+            <button class="btn" id="btnBack" onclick="App.prevStep()">← Voltar</button>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end;">
+              <span id="rascunhoStatus" class="rascunho-status"></span>
+              <button class="btn" id="btnSalvarRascunho" onclick="App.salvarRascunho(true)">💾 Salvar rascunho</button>
+              <button class="btn ghost" id="btnBaixarRascunho" onclick="App.baixarRascunho()" title="Baixa um arquivo .json com tudo o que já foi preenchido, para retomar em outro computador">⬇ Baixar cópia</button>
+              <button class="btn primary" id="btnNext" onclick="App.nextStep()">Avançar →</button>
+            </div>
+          </div>
+        </div></div>
+      </div>
+
+      <!-- ===== MEUS PROCESSOS ===== -->
+      <div class="view" id="view-processos">
+        <h2 class="view-title">Meus Processos</h2>
+        <p class="view-sub">Acompanhamento de todos os processos societários em andamento e concluídos.</p>
+        <div class="filters-row">
+          <select id="filterTipo" onchange="App.renderProcessosTable()">
+            <option value="">Todos os tipos</option>
+            <option value="abertura">Abertura de Empresa</option>
+            <option value="alteracao">Alteração Societária</option>
+            <option value="baixa">Baixa de Empresa</option>
+            <option value="outros">Outros Eventos</option>
+          </select>
+          <select id="filterStatus" onchange="App.renderProcessosTable()">
+            <option value="">Todos os status</option>
+            <option value="analise">Em análise</option>
+            <option value="documentos">Aguardando documentos</option>
+            <option value="andamento">Em andamento</option>
+            <option value="concluido">Concluído</option>
+          </select>
+          <input type="text" id="filterBusca" placeholder="Buscar por cliente..." oninput="App.aoParar('processos', ()=>App.renderProcessosTable())">
+        </div>
+        <div class="panel"><div class="panel-body"><table class="tbl" id="processosTable"></table></div></div>
+      </div>
+
+      <!-- ===== PAINEL DE CLIENTES ===== -->
+      <div class="view" id="view-clientes">
+        <div id="clientesLista">
+          <h2 class="view-title" id="cliViewTitle">Painel de Clientes</h2>
+          <p class="view-sub" id="cliViewSub">Cadastro consolidado de cada cliente: dados atuais do CNPJ, atividades vigentes, quadro societário com documentos pessoais e o histórico ordenado de alterações societárias.</p>
+          <!-- Nota técnica sobre a origem dos dados (SharePoint via Graph + OCR do Cartão CNPJ)
+               removida da tela a pedido do usuário. O mapeamento continua documentado no
+               comentário do CLIENTES_DETALHE e no doc do projeto. -->
+          <div class="filters-row">
+            <input type="text" id="cliBusca" placeholder="Buscar por razão social ou CNPJ..." oninput="App.aoParar('clientes', ()=>App.renderClientesGrid())">
+            <select id="cliFiltroSit" onchange="App.renderClientesGrid()">
+              <option value="">Todas as situações</option>
+              <option value="ATIVA">Ativa</option>
+              <option value="BAIXADA">Baixada</option>
+            </select>
+            <div class="view-toggle" id="cliViewToggle">
+              <button type="button" class="active" data-modo="cards" onclick="App.setModoVisualizacao('cards')">▦ Cartões</button>
+              <button type="button" data-modo="lista" onclick="App.setModoVisualizacao('lista')">☰ Lista</button>
+            </div>
+          </div>
+          <div class="cli-grid" id="clientesGrid"></div>
+
+          <div class="panel" style="margin-top:22px;" id="painelPendencias">
+            <div class="panel-head">
+              <h3 class="sec-title">Clientes sem documentação societária arquivada</h3>
+              <span class="badge warn" id="semDocBadge"><span class="dot"></span>—</span>
+            </div>
+            <div class="panel-body">
+              <p class="view-sub" style="margin:0 0 10px;">Estes clientes têm a pasta <code>03 - Societario</code> criada no SharePoint, mas <b>nem Cartão CNPJ nem QSA</b> arquivados em <code>03.01 - Contratos Sociais, CNPJ e QSA</code>. Sem esses dois documentos a ferramenta não consegue montar a ficha nem pré-preencher uma alteração — é a fila de trabalho para regularizar o acervo.</p>
+              <div id="semDocLista" style="display:flex;flex-wrap:wrap;gap:7px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="clienteDetalhe" style="display:none;"></div>
+      </div>
+
+      <!-- ===== CADASTRO DE SÓCIOS ===== -->
+      <div class="view" id="view-socios">
+        <div id="sociosLista">
+          <h2 class="view-title">Cadastro de Sócios</h2>
+          <p class="view-sub">Todas as pessoas que constam no quadro societário dos clientes, consolidadas a partir das fichas do Painel de Clientes. Um mesmo sócio aparece uma única vez, com todas as empresas em que participa.</p>
+          <div class="filters-row">
+            <input type="text" id="socioBusca" placeholder="Buscar por nome, CPF ou empresa..." oninput="App.aoParar('socios', ()=>App.renderSociosCadastro())">
+            <select id="socioFiltroDoc" onchange="App.renderSociosCadastro()">
+              <option value="">Todos os sócios</option>
+              <option value="pendente">Só com documento pendente</option>
+              <option value="multi">Só em mais de uma empresa</option>
+            </select>
+            <div class="view-toggle" id="socioViewToggle">
+              <button type="button" class="active" data-modo="cards" onclick="App.setModoSocios('cards')">▦ Cartões</button>
+              <button type="button" data-modo="lista" onclick="App.setModoSocios('lista')">☰ Lista</button>
+            </div>
+          </div>
+          <div id="sociosGrid"></div>
+        </div>
+        <div id="socioDetalhe" style="display:none;"></div>
+      </div>
+
+      <!-- ===== ADMIN: USUÁRIOS DE CLIENTES ===== -->
+      <div class="view" id="view-admin-importar">
+        <h2 class="view-title">Importar processos</h2>
+        <p class="view-sub">Traga de uma vez os processos que já estão em andamento no escritório, a partir de uma planilha. Visível apenas para administradores.</p>
+        <div id="importConteudo"></div>
+      </div>
+
+      <div class="view" id="view-admin-acervo">
+        <h2 class="view-title">Acervo do SharePoint</h2>
+        <p class="view-sub">Lê o acervo societário que já está arquivado no SharePoint e usa esse conteúdo para preencher o Painel de Clientes com dado real. Visível apenas para administradores.</p>
+        <div id="acervoConteudo"></div>
+      </div>
+
+      <div class="view" id="view-admin-usuarios-cliente">
+        <h2 class="view-title">Usuários de Clientes</h2>
+        <p class="view-sub">Pessoas que trabalham <b>no cliente</b> e recebem acesso externo à ferramenta. O cadastro é feito por um funcionário GS2 e define exatamente quais empresas cada pessoa enxerga.</p>
+        <div class="callout">
+          <b>O que esse acesso permite:</b> o usuário de cliente entra e vê <b>somente o Painel de Clientes</b>, restrito às empresas habilitadas no cadastro dele. Nessas empresas ele consulta a ficha, o histórico societário e <b>baixa ou compartilha os documentos</b>. Ele <b>não</b> abre processos, não edita cadastro, não roda OCR e não vê a fila interna de pendências da GS2.<br><br>
+          <b>Na versão integrada:</b> cada usuário destes vira um convidado (guest) no Microsoft Entra ID e a restrição por empresa é aplicada também no backend — não só na tela — para que a permissão valha inclusive nos links de download.
+        </div>
+        <div class="btn-row" style="margin-top:0;justify-content:flex-end;">
+          <span></span>
+          <button class="btn primary" onclick="App.openUsuarioClienteModal()">+ Cadastrar usuário de cliente</button>
+        </div>
+        <div class="panel" style="margin-top:16px;"><div class="panel-body"><table class="tbl" id="usuariosClienteTable"></table></div></div>
+
+        <div class="panel" style="margin-top:20px;margin-bottom:24px;">
+          <div class="panel-head">
+            <h3 class="sec-title">Links de compartilhamento gerados</h3>
+            <span class="badge info" id="linksBadge"><span class="dot"></span>0 links</span>
+          </div>
+          <div class="panel-body">
+            <p class="view-sub" style="margin:0 0 10px;">Todo link gerado no Painel de Clientes fica registrado aqui, com quem gerou, para qual empresa e até quando vale — é a trilha de auditoria de documento que saiu do escritório.</p>
+            <table class="tbl" id="linksTable"></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== MODELOS DE CONTRATO ===== -->
+      <div class="view" id="view-templates">
+        <h2 class="view-title">Modelos de Contrato</h2>
+        <p class="view-sub">Cadastre os modelos (Word) usados para gerar contratos automaticamente. Use tags como <code>{{razao_social}}</code> dentro do arquivo — elas serão substituídas pelos dados do processo e pelos dados extraídos por OCR dos documentos anexados.</p>
+        <div class="callout">
+          <b>Como funciona na versão integrada:</b> o backend abre o arquivo .docx do modelo, localiza as tags <code>{{...}}</code> e substitui pelos valores do formulário e da leitura automática dos documentos, gerando um novo arquivo e salvando na pasta do cliente no SharePoint.
+        </div>
+        <div class="btn-row" style="margin-top:0;justify-content:flex-end;">
+          <span></span>
+          <button class="btn primary" onclick="App.openTplModal()">+ Adicionar Modelo</button>
+        </div>
+        <div class="tpl-grid" id="tplGrid" style="margin-top:16px;"></div>
+      </div>
+
+      <!-- ===== ADMIN: ATUALIZAÇÃO DE TABELAS ===== -->
+      <div class="view" id="view-admin-tabelas">
+        <h2 class="view-title">Atualização de Tabelas</h2>
+        <p class="view-sub">Bases de referência usadas pela ferramenta (CNAE, clientes, modelos, Junta Comercial). Visível apenas para administradores.</p>
+        <div class="callout warn">
+          <b>Fase 1 — atualização manual/simulada.</b> Aqui, "Forçar atualização" registra a ação e atualiza a data mostrada abaixo, mas ainda não existe uma sincronização automática real com as fontes externas (API do IBGE, SharePoint, Junta Comercial). Uma rotina agendada e automática de atualização fica para a etapa futura de integração real.
+        </div>
+        <div class="btn-row" style="margin-top:0;justify-content:flex-end;">
+          <span></span>
+          <button class="btn dark" onclick="App.forcarAtualizacaoTodas()">🔄 Forçar atualização de todas</button>
+        </div>
+        <div class="panel" style="margin-top:14px;">
+          <div class="panel-head"><h3>Tabelas de referência</h3></div>
+          <div class="panel-body"><table class="tbl" id="tabelasRefTable"></table></div>
+        </div>
+        <div class="panel" style="margin-top:18px;">
+          <div class="panel-head"><h3>Histórico de atualizações</h3></div>
+          <div class="panel-body"><div id="adminLogBox" style="font-size:12.5px;"></div></div>
+        </div>
+      </div>
+
+      <!-- ===== ADMIN: USUÁRIOS ===== -->
+      <div class="view" id="view-admin-usuarios">
+        <h2 class="view-title">Usuários</h2>
+        <p class="view-sub">Cadastro de quem pode acessar a ferramenta e com qual papel (Administrador ou Colaborador). Visível apenas para administradores.</p>
+        <div class="callout">
+          <b>Como funciona na versão integrada:</b> este cadastro hoje é interno da ferramenta. Quando o login passar a usar o Microsoft Entra ID (Azure AD), a criação da conta em si continua sendo feita pelo TI da GS2 — este cadastro passa a servir para vincular o papel (Administrador/Colaborador) a cada conta já existente.
+        </div>
+        <div class="btn-row" style="margin-top:0;justify-content:flex-end;">
+          <span></span>
+          <button class="btn primary" onclick="App.openUsuarioModal()">+ Novo Usuário</button>
+        </div>
+        <div class="panel" style="margin-top:14px;">
+          <div class="panel-body"><table class="tbl" id="usuariosTable"></table></div>
+        </div>
+      </div>
+
+      <!-- ===== ADMIN: REQUERENTES ===== -->
+      <div class="view" id="view-admin-requerentes">
+        <h2 class="view-title">Requerentes</h2>
+        <p class="view-sub">Cadastro de CPF, e-mail e telefone das pessoas usadas como requerente ao abrir uma Consulta de Viabilidade na JUCEMAT (login gov.br). Visível apenas para administradores, por serem dados pessoais sensíveis.</p>
+        <div class="callout">
+          <b>Como é usado:</b> na etapa 6 do wizard (Junta Comercial), o colaborador escolhe qual requerente cadastrado aqui deve constar no processo, antes de enviá-lo à Junta — sem precisar ver ou editar o CPF/e-mail/telefone diretamente.
+        </div>
+        <div class="btn-row" style="margin-top:0;justify-content:flex-end;">
+          <span></span>
+          <button class="btn primary" onclick="App.openRequerenteModal()">+ Novo Requerente</button>
+        </div>
+        <div class="panel" style="margin-top:14px;">
+          <div class="panel-body"><table class="tbl" id="requerentesTable"></table></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: novo modelo de contrato ===== -->
+<div class="modal-overlay" id="pastaConfirmModal">
+  <div class="modal-box">
+    <h3>Criar pasta do cliente no SharePoint?</h3>
+    <p class="view-sub" style="margin:-6px 0 14px;">Como é uma <b>abertura de empresa</b>, ainda não existe pasta para este cliente. A ferramenta pode criá-la agora, já com a estrutura padrão da GS2.</p>
+    <div id="pastaConfirmAviso"></div>
+
+    <div style="padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);margin-bottom:14px;">
+      <div style="font-weight:700;font-size:13.5px;margin-bottom:3px;" id="pastaConfirmNome"></div>
+      <div style="font-size:11.5px;color:var(--muted);font-family:ui-monospace,monospace;" id="pastaConfirmCaminho"></div>
+    </div>
+
+    <div style="max-height:230px;overflow:auto;padding:11px 13px;border:1px dashed var(--line);border-radius:10px;background:#fff;margin-bottom:18px;" id="pastaConfirmArvore"></div>
+
+    <div class="btn-row" style="margin:0;">
+      <button class="btn" onclick="App.responderPastaSharePoint(false)">Não, criar depois</button>
+      <button class="btn primary" onclick="App.responderPastaSharePoint(true)">Sim, criar a pasta agora</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="usuarioClienteModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="App.closeUsuarioClienteModal()">✕</button>
+    <h3 id="usuarioClienteModalTitle">Cadastrar usuário de cliente</h3>
+    <p class="view-sub" style="margin:-6px 0 14px;">O acesso fica restrito ao Painel de Clientes e às empresas marcadas abaixo.</p>
+    <div class="form-grid" style="margin-bottom:12px;">
+      <div class="field"><label>Nome completo</label><input type="text" id="ucNome" placeholder="Ex.: André Rubens Baldo"></div>
+      <div class="field"><label>E-mail (será o login)</label><input type="text" id="ucEmail" placeholder="nome@empresadocliente.com.br"></div>
+      <div class="field"><label>Telefone / WhatsApp</label><input type="text" id="ucTelefone" placeholder="(65) 90000-0000"></div>
+      <div class="field"><label>Situação</label>
+        <select id="ucStatus"><option>Ativo</option><option>Inativo</option></select>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:16px;">
+      <label>Empresas liberadas para este usuário <span id="ucContador" style="color:var(--muted);font-weight:400;"></span></label>
+      <p class="view-sub" style="margin:2px 0 8px;font-size:11.5px;">O usuário só verá estas empresas. Marque apenas as que ele realmente precisa acessar.</p>
+      <div id="ucEmpresas" style="max-height:230px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:10px 12px;"></div>
+    </div>
+    <div class="btn-row"><span></span><button class="btn primary" onclick="App.saveUsuarioCliente()">Salvar usuário</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="compartilharModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="App.fecharCompartilhar()">&#10005;</button>
+    <h3>Compartilhar documento societário</h3>
+    <p class="view-sub" style="margin:-6px 0 14px;">Gera um link de acesso somente leitura, com prazo de validade. O destinatário não precisa de conta no SharePoint.</p>
+
+    <div style="padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);margin-bottom:16px;" id="compartilharAlvo"></div>
+
+    <div class="form-grid" style="margin-bottom:16px;">
+      <div class="field">
+        <label>Validade do link</label>
+        <select id="linkValidade">
+          <option value="7">7 dias</option>
+          <option value="15">15 dias</option>
+          <option value="30" selected>30 dias</option>
+          <option value="90">90 dias</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Quem pode abrir</label>
+        <select id="linkEscopo">
+          <option value="qualquer" selected>Qualquer pessoa com o link</option>
+          <option value="autenticado">Somente pessoas autenticadas</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="btn-row" style="margin:0 0 14px;"><span></span>
+      <button class="btn primary" onclick="App.gerarLinkCompartilhamento()">Gerar link</button>
+    </div>
+
+    <div id="compartilharLinkBox" style="display:none;">
+      <div class="field" style="margin-bottom:8px;">
+        <label>Link gerado</label>
+        <input type="text" id="linkGerado" readonly style="font-family:ui-monospace,monospace;font-size:12.5px;">
+      </div>
+      <div id="linkResumo" style="font-size:11.5px;color:var(--muted);margin-bottom:14px;"></div>
+      <div class="btn-row" style="margin:0;justify-content:flex-start;">
+        <button class="btn" id="btnCopiar" onclick="App.copiarLink()">Copiar link</button>
+        <button class="btn primary" id="btnWhats">Enviar por WhatsApp</button>
+      </div>
+      <p class="view-sub" style="margin:14px 0 0;font-size:11.5px;">Fase 1: link simulado. Na versao integrada e um sharing link real da Microsoft Graph (<code>/createLink</code>), com a mesma validade e escopo escolhidos aqui, e cada abertura fica registrada no log do SharePoint.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: seleção do cliente (etapa 2) =====
+     A lista de clientes não fica mais aberta na tela: ela vive só aqui dentro,
+     e a etapa 2 mostra apenas o cliente escolhido. -->
+<!-- ===== Modal: mapa de campos da Viabilidade (ferramenta → portal) ===== -->
+<div class="modal-overlay" id="mapaViabModal">
+  <div class="modal-box" style="max-width:680px;">
+    <button class="modal-close" onclick="App.fecharMapaViabilidade()">✕</button>
+    <h3>Mapa dos campos da Viabilidade</h3>
+    <p class="view-sub" style="margin-top:-8px;">De onde sai cada informação que o portal pede, tela a tela, com as armadilhas observadas no primeiro protocolo real. É este mapa que a automação da Fase 2 vai seguir.</p>
+    <div id="mapaViabConteudo" style="margin-top:14px;"></div>
+  </div>
+</div>
+
+<!-- ===== Modal: diagnóstico da integração (Entra ID + SharePoint) ===== -->
+<div class="modal-overlay" id="diagModal">
+  <div class="modal-box" style="max-width:640px;">
+    <button class="modal-close" onclick="App.fecharDiagnostico()">✕</button>
+    <h3>Diagnóstico da integração</h3>
+    <p class="view-sub" style="margin-top:-8px;">Roda as mesmas chamadas reais que a ferramenta usa no dia a dia (Microsoft Entra ID + Microsoft Graph/SharePoint) e mostra o que cada uma respondeu. Serve para validar o ambiente <b>antes de publicar</b>.</p>
+    <div id="diagResultado" style="margin:14px 0;"></div>
+    <div class="btn-row" style="gap:8px;flex-wrap:wrap;">
+      <button class="btn" onclick="App.rodarDiagnostico(false)">↻ Repetir testes de leitura</button>
+      <button class="btn dark" onclick="if(confirm('Este teste CRIA de verdade uma pasta e um arquivo no SharePoint da GS2 (pasta \u0022'+GS2_CONFIG.sharepoint.pastaTestes+'\u0022). Continuar?')) App.rodarDiagnostico(true)">Executar teste de gravação</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="clienteModal">
+  <div class="modal-box" style="max-width:560px;">
+    <button class="modal-close" onclick="App.fecharClienteModal()">✕</button>
+    <h3>Selecionar cliente</h3>
+    <div class="client-search"><input type="text" id="clientSearch" placeholder="Buscar empresa por nome..." oninput="App.aoParar('wizard', ()=>App.filterClients())"></div>
+    <div class="client-list" id="clientList"></div>
+    <div class="btn-row" style="margin-top:16px;"><span></span><button class="btn" onclick="App.fecharClienteModal()">Fechar</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="tplModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="App.closeTplModal()">✕</button>
+    <h3>Novo modelo de contrato</h3>
+    <div class="field" style="margin-bottom:12px;"><label>Nome do modelo</label><input type="text" id="tplNome" placeholder="Ex.: Contrato Social Padrão - LTDA"></div>
+    <div class="field" style="margin-bottom:12px;"><label>Aplicável ao tipo de processo</label>
+      <select id="tplTipo">
+        <option value="abertura">Abertura de Empresa</option>
+        <option value="alteracao">Alteração Societária</option>
+        <option value="baixa">Baixa de Empresa</option>
+        <option value="outros">Outros Eventos</option>
+      </select>
+    </div>
+    <div class="field" style="margin-bottom:16px;">
+      <label>Arquivo do modelo (.docx)</label>
+      <div class="extra-drop" id="tplDrop" style="padding:18px;">Clique para selecionar o arquivo .docx<br><span id="tplFileName" style="font-weight:700;color:var(--dark);"></span></div>
+      <input type="file" id="tplFileInput" accept=".docx,.doc" style="display:none">
+    </div>
+    <div id="tplDetected"></div>
+    <div class="btn-row"><span></span><button class="btn primary" onclick="App.saveTemplate()">Salvar modelo</button></div>
+  </div>
+</div>
+
+<!-- ===== Modal: acompanhamento Junta Comercial (JUCEMAT) ===== -->
+<div class="modal-overlay" id="jucematModal">
+  <div class="modal-box" style="max-width:640px;">
+    <button class="modal-close" onclick="App.closeJucematModal()">✕</button>
+    <h3 id="jucematModalTitle">Acompanhamento — Junta Comercial</h3>
+    <p class="view-sub" style="margin-top:-8px;">Fluxo baseado nos manuais da JUCEMAT (Portal de Serviços / REDESIM) para o estado de Mato Grosso. <b>Fase 1 do projeto:</b> este acompanhamento é atualizado manualmente pelo colaborador. A automação da submissão/assinatura no portal é uma <b>Fase 2 planejada</b>, ainda não iniciada.</p>
+    <div id="jucematSteps"></div>
+    <div class="field" style="margin:14px 0;"><label>Número do protocolo (ex.: MTP...)</label><input type="text" id="jucematProtocolo" placeholder="MTP0000000000"></div>
+    <div id="jucematIndeferimentoBox"></div>
+    <div id="jucematNotifyBox"></div>
+    <div class="btn-row"><span></span><button class="btn primary" onclick="App.saveJucemat()">Salvar acompanhamento</button></div>
+  </div>
+</div>
+
+<!-- ===== Modal: novo/editar usuário ===== -->
+<div class="modal-overlay" id="usuarioModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="App.closeUsuarioModal()">✕</button>
+    <h3 id="usuarioModalTitle">Novo usuário</h3>
+    <div class="field" style="margin-bottom:12px;"><label>Nome completo</label><input type="text" id="usuarioNome" placeholder="Ex.: Ana Beatriz Souza"></div>
+    <div class="field" style="margin-bottom:12px;"><label>E-mail corporativo</label><input type="text" id="usuarioEmail" placeholder="nome@gs2negocios.com.br"></div>
+    <div class="field" style="margin-bottom:12px;"><label>Papel</label>
+      <select id="usuarioPapel">
+        <option value="Colaborador">Colaborador</option>
+        <option value="Administrador">Administrador</option>
+      </select>
+    </div>
+    <div class="field" style="margin-bottom:16px;">
+      <label class="check-item" style="cursor:pointer;"><input type="checkbox" id="usuarioAtivo" checked> Usuário ativo (pode acessar a ferramenta)</label>
+    </div>
+    <div class="btn-row"><span></span><button class="btn primary" onclick="App.saveUsuario()">Salvar usuário</button></div>
+  </div>
+</div>
+
+<!-- ===== Modal: novo/editar requerente (dados para login gov.br na Viabilidade) ===== -->
+<div class="modal-overlay" id="requerenteModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="App.closeRequerenteModal()">✕</button>
+    <h3 id="requerenteModalTitle">Novo requerente</h3>
+    <div class="field" style="margin-bottom:12px;"><label>Nome completo</label><input type="text" id="requerenteNome" placeholder="Ex.: Marcus Vinicius Gomes"></div>
+    <div class="field" style="margin-bottom:12px;"><label>CPF</label><input type="text" id="requerenteCpf" placeholder="000.000.000-00"></div>
+    <div class="field" style="margin-bottom:12px;"><label>E-mail</label><input type="text" id="requerenteEmail" placeholder="nome@exemplo.com"></div>
+    <div class="field" style="margin-bottom:16px;"><label>Telefone</label><input type="text" id="requerenteTelefone" placeholder="(65)90000-0000"></div>
+    <div class="field" style="margin-bottom:16px;">
+      <label class="check-item" style="cursor:pointer;"><input type="checkbox" id="requerenteAtivo" checked> Requerente ativo (disponível para seleção nos processos)</label>
+    </div>
+    <div class="btn-row"><span></span><button class="btn primary" onclick="App.saveRequerente()">Salvar requerente</button></div>
+  </div>
+</div>
+
+<!-- pdf.js: extrai a camada de texto da CNH-e (PDF do app do Denatran) direto no navegador.
+     Sem chave de API e sem servidor — o documento do sócio nunca sai da máquina do colaborador.
+     Se o CDN não carregar (sem internet), a ferramenta avisa e cai no modo simulado. -->
+<!-- Autenticação Microsoft Entra ID. O arquivo é servido junto com a página
+     (vendor/msal-browser.min.js) em vez de vir de CDN: a partir da versão 3 a
+     Microsoft deixou de publicar o msal-browser em CDN público. Se o arquivo não
+     estiver presente — por exemplo ao abrir este .html direto do disco — a
+     ferramenta detecta e cai sozinha em modo demonstração. -->
+
+<!-- Autenticação Microsoft Entra ID. Servida junto com a página: a partir da v3 a
+     Microsoft deixou de publicar o msal-browser em CDN público. Sem este arquivo,
+     a ferramenta detecta e cai sozinha em modo demonstração. -->
+<script src="vendor/msal-browser.min.js"></script>
+<!-- Leitura de planilha .xlsx na importação da base inicial de processos -->
+<script src="vendor/xlsx.min.js"></script>
+<!-- Configuração do ambiente (tenantId, clientId...). É o ÚNICO arquivo que muda
+     entre o teste local e a publicação. -->
+<script src="config.js"></script>
+
+<!-- OCR da CNH: pdf.js extrai a imagem do PDF e o Tesseract lê. Roda no próprio
+     navegador — o documento do sócio não sai da máquina. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.0/tesseract.min.js"></script>
+<script>
+  if(window.pdfjsLib){
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+</script>
+
+<!-- Camada de ambiente: configuração, autenticação, SharePoint e API -->
+<script src="js/integracao.js"></script>
+
+<!-- Dados de referência -->
+<script src="dados/cnae.js"></script>
+<script src="dados/clientes.js"></script>
+<script src="dados/estrutura.js"></script>
+<script src="dados/exemplos.js"></script>
+<script src="dados/modelos.js"></script>
+<script src="dados/cadastros.js"></script>
+
+<!-- Gatilhos da automação da Junta Comercial (Fase 2) -->
+<script src="js/acervo.js"></script>
+<script src="js/redesim.js"></script>
+
+<!-- Estado do wizard e do usuário logado -->
+<script src="js/estado.js"></script>
+
+<!-- A aplicação, em partes (a ordem importa: a parte 1 cria o objeto App) -->
+<script src="js/app-1-sessao-clientes.js"></script>
+<script src="js/app-2-documentos-rascunho.js"></script>
+<script src="js/app-3-formularios-cnae.js"></script>
+<script src="js/app-4-ocr-socios.js"></script>
+<script src="js/app-5-wizard-junta.js"></script>
+<script src="js/app-6-contrato-admin.js"></script>
+<script src="js/app-7-acervo.js"></script>
+<script src="js/importacao.js"></script>
+
+<!-- Sobe a autenticação e entra direto se já houver sessão Microsoft -->
+<!-- Documento que vira o PDF do resumo (etapa 5 do wizard). Precisa ser filho
+     DIRETO do <body>: na impressão o CSS esconde todos os irmãos dele e
+     mostra só este. Some com display:none fora da impressão. -->
+<div id="clientePdfDoc"></div>
+
+<script src="js/inicializacao.js"></script>
+
+</body>
+</html>

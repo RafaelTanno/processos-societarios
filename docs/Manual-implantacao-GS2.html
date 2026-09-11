@@ -1,0 +1,865 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<title>Do GitHub ao SharePoint</title>
+<style>
+  /* Sistema visual da GS2 — Manual da Marca: verde escuro #003232, verde claro
+     #82C81E, Segoe UI em três pesos (bold para título, light itálico para
+     subtítulo, regular para corpo). Os neutros puxam para o teal da marca. */
+  :root{
+    color-scheme:light dark;
+    --verde-escuro:#003232;
+    --verde-claro:#82C81E;
+    --verde-texto:#4a7a12;     /* verde legível sobre fundo claro */
+    --verde-fundo:#eef8de;
+    --tinta:#12201f;
+    --tinta-2:#3c4f4d;
+    --apagado:#5f7270;
+    --linha:#dbe5e2;
+    --superficie:#f3f7f5;
+    --papel:#ffffff;
+    --chao:#eef2f0;
+    --sobre-escuro:#cfe0dc;
+
+    --atencao:#8a5600;      --atencao-fundo:#fdf3e0;  --atencao-linha:#f0dcb4;
+    --perigo:#a32e26;       --perigo-fundo:#fce9e7;   --perigo-linha:#f2cbc7;
+    --certo:#15704a;        --certo-fundo:#e4f4ec;    --certo-linha:#c3e5d4;
+
+    --fonte:'Segoe UI',-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;
+    --mono:'SFMono-Regular',ui-monospace,Menlo,Consolas,'Liberation Mono',monospace;
+    --largura:1180px;
+    --icone:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M0 0H100V73A27 27 0 0 1 73 100H50V50H0Z' fill='%23000'/%3E%3C/svg%3E");
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --verde-texto:#a8dd52;
+      --verde-fundo:#173318;
+      --tinta:#e7efec;
+      --tinta-2:#c3d1cd;
+      --apagado:#93a6a2;
+      --linha:#1f3735;
+      --superficie:#0c2523;
+      --papel:#092121;
+      --chao:#051817;
+      --atencao:#e8b464;      --atencao-fundo:#2c2211;  --atencao-linha:#4a3a1c;
+      --perigo:#f0968c;       --perigo-fundo:#2d1614;   --perigo-linha:#4d2622;
+      --certo:#6cc79b;        --certo-fundo:#0e2a20;    --certo-linha:#1c4735;
+    }
+  }
+  :root[data-theme="dark"]{
+    --verde-texto:#a8dd52;
+    --verde-fundo:#173318;
+    --tinta:#e7efec;
+    --tinta-2:#c3d1cd;
+    --apagado:#93a6a2;
+    --linha:#1f3735;
+    --superficie:#0c2523;
+    --papel:#092121;
+    --chao:#051817;
+    --atencao:#e8b464;      --atencao-fundo:#2c2211;  --atencao-linha:#4a3a1c;
+    --perigo:#f0968c;       --perigo-fundo:#2d1614;   --perigo-linha:#4d2622;
+    --certo:#6cc79b;        --certo-fundo:#0e2a20;    --certo-linha:#1c4735;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;background:var(--chao);color:var(--tinta);
+    font-family:var(--fonte);font-size:16px;line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4{text-wrap:balance;margin:0;}
+  p{margin:0;}
+  code{font-family:var(--mono);font-size:.86em;}
+
+  /* ---------- cabeçalho ---------- */
+  .capa{
+    background:var(--verde-escuro);color:#fff;position:relative;overflow:hidden;
+    padding:54px 32px 60px;
+  }
+  .capa-int{max-width:var(--largura);margin:0 auto;position:relative;z-index:2;}
+  /* moldura da marca: linha fina com canto arredondado, tocando as bordas */
+  .capa::after{
+    content:'';position:absolute;left:34px;right:0;top:0;bottom:26px;z-index:1;
+    border-left:1px solid rgba(255,255,255,.20);
+    border-bottom:1px solid rgba(255,255,255,.20);
+    border-radius:0 0 0 90px;pointer-events:none;
+  }
+  .capa .etiqueta{
+    font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--verde-claro);font-weight:700;margin-bottom:14px;
+  }
+  .capa h1{
+    font-size:clamp(30px,4.6vw,52px);line-height:1.08;font-weight:300;font-style:italic;
+    color:var(--verde-claro);max-width:16ch;
+  }
+  .capa .linha-fina{
+    margin-top:18px;max-width:62ch;color:var(--sobre-escuro);font-size:16.5px;line-height:1.62;
+  }
+  .capa .linha-fina b{color:#fff;font-weight:600;}
+  .capa code{background:rgba(255,255,255,.10);border-radius:4px;padding:1px 6px;color:#e4f0ec;}
+
+  .medidor{margin-top:30px;max-width:520px;}
+  .medidor-topo{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:#b9cec9;margin-bottom:7px;}
+  .medidor-topo b{color:#fff;font-size:14px;font-variant-numeric:tabular-nums;}
+  .medidor-trilho{height:6px;border-radius:99px;background:rgba(255,255,255,.16);overflow:hidden;}
+  .medidor-barra{height:100%;width:0;background:var(--verde-claro);border-radius:99px;transition:width .35s ease;}
+
+  /* ---------- corpo ---------- */
+  .quadro{max-width:var(--largura);margin:0 auto;padding:0 32px 90px;
+    display:grid;grid-template-columns:236px minmax(0,1fr);gap:44px;align-items:start;}
+  @media (max-width:980px){ .quadro{grid-template-columns:minmax(0,1fr);gap:0;padding-bottom:64px;} }
+
+  .trilho{position:sticky;top:24px;padding-top:32px;}
+  @media (max-width:980px){ .trilho{display:none;} }
+  .trilho-tit{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--apagado);font-weight:700;margin-bottom:12px;}
+  .trilho a{
+    display:flex;gap:11px;align-items:baseline;text-decoration:none;color:var(--tinta-2);
+    font-size:13.5px;padding:7px 10px;border-radius:8px;
+  }
+  .trilho a:hover{background:var(--superficie);color:var(--tinta);}
+  .trilho a.pronto{color:var(--apagado);}
+  .trilho a.pronto .n{color:var(--certo);}
+  .trilho .n{
+    font-variant-numeric:tabular-nums;font-weight:700;font-size:11.5px;color:var(--verde-texto);
+    min-width:17px;
+  }
+  .trilho .tempo{margin-left:auto;font-size:11px;color:var(--apagado);}
+
+  .fluxo{padding-top:32px;display:flex;flex-direction:column;gap:26px;min-width:0;}
+
+  /* ---------- pré-requisitos e blocos de apoio ---------- */
+  .antes{
+    background:var(--papel);border:1px solid var(--linha);border-radius:14px;padding:24px 26px;
+  }
+  .antes h2{font-size:17px;font-weight:700;color:var(--tinta);margin-bottom:4px;}
+  .antes .sub{font-weight:300;font-style:italic;color:var(--apagado);font-size:14.5px;margin-bottom:18px;}
+  .antes ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px 26px;}
+  .antes li{display:flex;gap:10px;font-size:14px;line-height:1.5;color:var(--tinta-2);}
+  .marca-ic{
+    width:.62em;height:.62em;flex:none;margin-top:.42em;background:var(--verde-claro);
+    -webkit-mask:var(--icone) no-repeat center/contain; mask:var(--icone) no-repeat center/contain;
+  }
+  .antes code, .etapa code{background:var(--superficie);border:1px solid var(--linha);border-radius:4px;padding:1px 5px;}
+
+  /* ---------- etapa ---------- */
+  .etapa{
+    background:var(--papel);border:1px solid var(--linha);border-radius:14px;
+    overflow:hidden;scroll-margin-top:20px;
+  }
+  .etapa-cab{
+    display:flex;gap:18px;align-items:flex-start;padding:24px 26px 20px;
+    border-bottom:1px solid var(--linha);flex-wrap:wrap;
+  }
+  .etapa-num{
+    font-size:30px;font-weight:700;line-height:1;color:var(--verde-texto);
+    font-variant-numeric:tabular-nums;min-width:42px;
+  }
+  .etapa-tit{flex:1;min-width:200px;}
+  .etapa-tit h2{font-size:20px;font-weight:700;color:var(--tinta);letter-spacing:-.01em;}
+  .etapa-tit .objetivo{
+    font-weight:300;font-style:italic;color:var(--apagado);font-size:15px;margin-top:3px;
+  }
+  .etapa-meta{display:flex;gap:8px;align-items:center;flex:none;flex-wrap:wrap;}
+  .selo{
+    font-size:11px;font-weight:700;letter-spacing:.03em;padding:4px 10px;border-radius:99px;
+    background:var(--superficie);color:var(--apagado);white-space:nowrap;
+  }
+  .selo.onde{background:var(--verde-fundo);color:var(--verde-texto);}
+
+  .etapa-corpo{padding:22px 26px 26px;}
+  .etapa-intro{font-size:14.6px;color:var(--tinta-2);margin-bottom:16px;}
+
+  ol.passos{list-style:none;counter-reset:p;margin:0;padding:0;display:flex;flex-direction:column;gap:16px;}
+  ol.passos > li{counter-increment:p;display:grid;grid-template-columns:26px minmax(0,1fr);gap:13px;align-items:start;}
+  /* O número ocupa a coluna 1 da primeira linha; TODO o conteúdo do passo fica
+     na coluna 2. Sem isto, o segundo parágrafo em diante cai na coluna estreita
+     do número e o texto quebra em uma palavra por linha. */
+  ol.passos > li::before{
+    content:counter(p);grid-column:1;grid-row:1;
+    font-size:11.5px;font-weight:700;color:var(--verde-texto);
+    background:var(--verde-fundo);border-radius:50%;width:22px;height:22px;
+    display:grid;place-items:center;margin-top:1px;font-variant-numeric:tabular-nums;
+  }
+  ol.passos > li > *{grid-column:2;min-width:0;}
+  ol.passos p{font-size:14.6px;color:var(--tinta-2);}
+  ol.passos p + p{margin-top:5px;}
+  .clique{
+    font-weight:600;color:var(--tinta);
+    background:var(--superficie);border:1px solid var(--linha);border-radius:5px;
+    padding:1px 6px;font-size:13.2px;display:inline-block;
+  }
+  .campo{font-family:var(--mono);font-size:12.8px;background:var(--superficie);
+    border:1px solid var(--linha);border-radius:5px;padding:1px 6px;color:var(--tinta);
+    word-break:break-word;}
+
+  pre{
+    margin:9px 0 0;background:var(--verde-escuro);color:#dcece7;border-radius:10px;
+    padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.65;
+  }
+  pre .cmt{color:#7fa39c;}
+  pre b{color:var(--verde-claro);font-weight:600;}
+
+  .confere{
+    margin-top:22px;background:var(--certo-fundo);border:1px solid var(--certo-linha);
+    border-radius:11px;padding:15px 17px;display:flex;gap:12px;
+  }
+  .confere .ic{color:var(--certo);font-size:16px;line-height:1.35;flex:none;}
+  .confere h4{font-size:13px;font-weight:700;color:var(--certo);margin-bottom:3px;letter-spacing:.01em;}
+  .confere p{font-size:14px;color:var(--tinta-2);}
+  .confere code{background:transparent;border:none;padding:0;font-weight:600;}
+
+  .nota{
+    margin-top:14px;border-radius:11px;padding:14px 16px;font-size:14px;line-height:1.55;
+    display:flex;gap:12px;
+  }
+  .nota .ic{flex:none;font-size:15px;line-height:1.4;}
+  .nota b{font-weight:700;}
+  .nota.atencao{background:var(--atencao-fundo);border:1px solid var(--atencao-linha);color:var(--tinta-2);}
+  .nota.atencao b{color:var(--atencao);} .nota.atencao .ic{color:var(--atencao);}
+  .nota.perigo{background:var(--perigo-fundo);border:1px solid var(--perigo-linha);color:var(--tinta-2);}
+  .nota.perigo b{color:var(--perigo);} .nota.perigo .ic{color:var(--perigo);}
+
+  .etapa-pe{
+    border-top:1px solid var(--linha);padding:13px 26px;background:var(--superficie);
+  }
+  .etapa-pe label{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13.5px;color:var(--tinta-2);font-weight:600;}
+  .etapa-pe input{width:17px;height:17px;accent-color:var(--verde-claro);cursor:pointer;flex:none;}
+  .etapa.feita{border-color:var(--certo-linha);}
+  .etapa.feita .etapa-num{color:var(--certo);}
+  .etapa.feita .etapa-pe{background:var(--certo-fundo);}
+  .etapa.feita .etapa-pe label{color:var(--certo);}
+
+  .rolagem{overflow-x:auto;margin-top:14px;border:1px solid var(--linha);border-radius:11px;}
+  table{border-collapse:collapse;width:100%;font-size:13.6px;min-width:520px;}
+  th{
+    text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--apagado);font-weight:700;padding:11px 14px;background:var(--superficie);
+    border-bottom:1px solid var(--linha);
+  }
+  td{padding:11px 14px;border-bottom:1px solid var(--linha);color:var(--tinta-2);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+
+  /* ---------- fecho ---------- */
+  .depois{
+    background:var(--verde-escuro);color:var(--sobre-escuro);border-radius:14px;padding:28px 30px;
+  }
+  .depois h2{font-size:19px;color:#fff;font-weight:700;margin-bottom:4px;}
+  .depois .sub{font-weight:300;font-style:italic;color:var(--verde-claro);font-size:15px;margin-bottom:18px;}
+  .depois p{font-size:14.6px;line-height:1.65;color:var(--sobre-escuro);}
+  .depois p + p{margin-top:11px;}
+  .depois b{color:#fff;}
+  .depois code{background:rgba(255,255,255,.10);border-radius:4px;padding:1px 6px;color:#e4f0ec;}
+  .ciclo{
+    display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0 4px;
+    font-size:13px;color:var(--sobre-escuro);
+  }
+  .ciclo span{background:rgba(255,255,255,.09);border-radius:8px;padding:7px 12px;}
+  .ciclo i{color:var(--verde-claro);font-style:normal;}
+
+  .glossario{background:var(--papel);border:1px solid var(--linha);border-radius:14px;padding:24px 26px;}
+  .glossario h2{font-size:17px;font-weight:700;margin-bottom:4px;color:var(--tinta);}
+  .glossario .sub{font-weight:300;font-style:italic;color:var(--apagado);font-size:14.5px;margin-bottom:16px;}
+  .glossario dl{margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:15px 28px;}
+  .glossario dt{font-weight:700;font-size:13.6px;color:var(--tinta);}
+  .glossario dd{margin:2px 0 0;font-size:13.6px;color:var(--tinta-2);line-height:1.52;}
+  .glossario code{background:var(--superficie);border:1px solid var(--linha);border-radius:4px;padding:1px 5px;}
+
+  .rodape{
+    max-width:var(--largura);margin:0 auto;padding:0 32px 46px;
+    font-size:12.5px;color:var(--apagado);line-height:1.6;
+  }
+  .rodape code{background:var(--superficie);border:1px solid var(--linha);border-radius:4px;padding:1px 5px;}
+  a{color:var(--verde-texto);text-decoration-color:var(--verde-claro);text-underline-offset:2px;}
+  :focus-visible{outline:2px solid var(--verde-claro);outline-offset:2px;border-radius:4px;}
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
+
+  /* ---------- impressão / PDF ----------
+     O manual é feito para ser seguido enquanto se clica em outra janela, então
+     imprimir e deixar ao lado do teclado é um uso legítimo. Na folha: sai o
+     trilho lateral (que é navegação) e a barra de progresso (que é interação),
+     e nenhum passo, aviso ou bloco de verificação é partido no meio. */
+  @media print{
+    :root{
+      --chao:#fff; --papel:#fff; --superficie:#f4f7f5;
+      --tinta:#12201f; --tinta-2:#33403f; --apagado:#5a6a68; --linha:#c9d6d2;
+    }
+    @page{ size:A4; margin:14mm 12mm; }
+    *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    body{ background:#fff; font-size:11.5pt; }
+    .trilho, .medidor{ display:none; }
+    .quadro{ display:block; padding:0 0 12mm; max-width:none; }
+    .fluxo{ display:block; padding-top:8mm; }
+    .fluxo > *{ margin-bottom:7mm; }
+    .capa{ padding:16mm 12mm 14mm; }
+    .capa h1{ font-size:30pt; }
+    .capa .linha-fina{ font-size:11.5pt; }
+    .etapa, .antes, .glossario, .depois{ break-inside:auto; box-shadow:none; }
+    .etapa{ break-before:page; }
+    #e1{ break-before:auto; }
+    .etapa-cab, ol.passos > li, .confere, .nota, .rolagem, pre, .ciclo,
+    .glossario dl > div, .antes li{ break-inside:avoid; }
+    .etapa-cab{ break-after:avoid; }
+    h2, h4{ break-after:avoid; }
+    .etapa-pe{ background:#fff; border-top:1px dashed var(--linha); }
+    .etapa-pe input{ appearance:none;-webkit-appearance:none;width:13px;height:13px;
+      border:1.4px solid var(--apagado);border-radius:3px;background:#fff; }
+    a{ text-decoration:none; }
+    .rodape{ padding:0; margin-top:6mm; break-before:avoid; }
+  }
+</style>
+
+<header class="capa">
+  <div class="capa-int">
+    <div class="etiqueta">GS2 Negócios · Processos Societários</div>
+    <h1>Do GitHub ao SharePoint</h1>
+    <p class="linha-fina">
+      O caminho completo para tirar a ferramenta da sua máquina e colocá-la no ar, funcionando
+      com o Microsoft 365 da GS2. São <b>oito etapas</b>, cerca de <b>2 horas</b> no total, e
+      nenhuma delas exige saber programar — o que exige é ter, na hora certa, permissão de
+      administrador no Microsoft 365 e acesso ao DNS de <code>gs2negocios.com.br</code>.
+    </p>
+
+    <div class="medidor">
+      <div class="medidor-topo"><span>Progresso</span><b><span id="feitas">0</span> de 8 etapas</b></div>
+      <div class="medidor-trilho"><div class="medidor-barra" id="barra"></div></div>
+    </div>
+  </div>
+</header>
+
+<div class="quadro">
+
+  <nav class="trilho" aria-label="Etapas">
+    <div class="trilho-tit">Etapas</div>
+    <a href="#e1" data-ir="1"><span class="n">1</span>GitHub<span class="tempo">15 min</span></a>
+    <a href="#e2" data-ir="2"><span class="n">2</span>Entra ID<span class="tempo">25 min</span></a>
+    <a href="#e3" data-ir="3"><span class="n">3</span>Banco<span class="tempo">10 min</span></a>
+    <a href="#e4" data-ir="4"><span class="n">4</span>Publicação<span class="tempo">15 min</span></a>
+    <a href="#e5" data-ir="5"><span class="n">5</span>Variáveis<span class="tempo">10 min</span></a>
+    <a href="#e6" data-ir="6"><span class="n">6</span>config.js<span class="tempo">10 min</span></a>
+    <a href="#e7" data-ir="7"><span class="n">7</span>Domínio<span class="tempo">20 min</span></a>
+    <a href="#e8" data-ir="8"><span class="n">8</span>Conferir<span class="tempo">20 min</span></a>
+  </nav>
+
+  <main class="fluxo">
+
+    <section class="antes">
+      <h2>Antes de começar</h2>
+      <p class="sub">Cinco coisas que, se faltarem no meio do caminho, travam tudo.</p>
+      <ul>
+        <li><span class="marca-ic"></span><span><b>Conta do Azure</b> com um cartão cadastrado. O custo real fica em torno de R$ 30 a R$ 60 por mês.</span></li>
+        <li><span class="marca-ic"></span><span><b>Permissão de administrador global</b> no Microsoft 365 da GS2 — é o que permite conceder consentimento na etapa 2.</span></li>
+        <li><span class="marca-ic"></span><span><b>Acesso ao DNS</b> de <code>gs2negocios.com.br</code>, onde os registros do domínio são editados.</span></li>
+        <li><span class="marca-ic"></span><span><b>Conta no GitHub</b> e o Git instalado no Mac (ele já vem; confirme com <code>git --version</code>).</span></li>
+        <li><span class="marca-ic"></span><span><b>A pasta da ferramenta</b> em <code>Ferramentas/Societário</code>, rodando na sua máquina.</span></li>
+      </ul>
+      <div class="nota atencao">
+        <span class="ic">◆</span>
+        <span><b>Não precisa fazer tudo de uma vez.</b> As etapas 1 a 3 são independentes e podem
+        ser feitas hoje. Da 4 em diante uma depende da anterior. A etapa 7 tem espera de DNS, que
+        pode levar horas — comece por ela cedo no dia se quiser terminar no mesmo dia.</span>
+      </div>
+    </section>
+
+    <section class="etapa" id="e1" data-etapa="1">
+      <div class="etapa-cab">
+        <div class="etapa-num">1</div>
+        <div class="etapa-tit">
+          <h2>Subir o código para o GitHub</h2>
+          <p class="objetivo">O código sai da sua máquina e passa a ter histórico, com quem mudou o quê.</p>
+        </div>
+        <div class="etapa-meta"><span class="selo onde">Mac + GitHub</span><span class="selo">15 min</span></div>
+      </div>
+      <div class="etapa-corpo">
+        <ol class="passos">
+          <li><p>Em <a href="https://github.com/new" target="_blank" rel="noopener">github.com/new</a>, crie o repositório com o nome <span class="campo">gs2-processos-societarios</span>.</p>
+              <p>Marque <span class="clique">Private</span>. Deixe <b>desmarcadas</b> as opções de README, .gitignore e licença — o repositório já tem os seus.</p></li>
+          <li><p>Abra o Terminal e rode, uma linha por vez:</p>
+              <pre><span class="cmt"># entra na pasta da ferramenta</span>
+cd ~/Desktop/Ferramentas/Societário
+
+<span class="cmt"># prepara o repositório e faz o primeiro registro</span>
+git init
+git add .
+git commit -m "Ferramenta de processos societários — versão inicial"
+
+<span class="cmt"># liga na sua conta do GitHub e envia</span>
+git branch -M main
+git remote add origin <b>https://github.com/SUA-CONTA/gs2-processos-societarios.git</b>
+git push -u origin main</pre>
+              <p>Troque <b>SUA-CONTA</b> pelo seu usuário do GitHub. Se ele pedir senha, não é a do site: crie um token em <span class="clique">Settings › Developer settings › Personal access tokens</span> e cole no lugar da senha.</p></li>
+          <li><p>Recarregue a página do repositório no navegador. Os arquivos devem estar lá.</p></li>
+        </ol>
+
+        <div class="confere">
+          <span class="ic">✓</span>
+          <div>
+            <h4>Como saber que deu certo</h4>
+            <p>O GitHub mostra a pasta <code>web/</code>, a pasta <code>api/</code> e o arquivo <code>README.md</code> na tela inicial do repositório. Se aparecer a pasta <code>node_modules</code>, algo saiu errado no <code>.gitignore</code> — me avise antes de seguir.</p>
+          </div>
+        </div>
+
+        <div class="nota perigo">
+          <span class="ic">■</span>
+          <span><b>Confirme que o repositório é privado.</b> Ele contém nomes reais de clientes da GS2 nos dados de exemplo. Um repositório público exporia isso a qualquer pessoa na internet.</span>
+        </div>
+      </div>
+      <div class="etapa-pe"><label><input type="checkbox" data-marca="1"> Etapa concluída</label></div>
+    </section>
+
+    <section class="etapa" id="e2" data-etapa="2">
+      <div class="etapa-cab">
+        <div class="etapa-num">2</div>
+        <div class="etapa-tit">
+          <h2>Registrar a ferramenta no Microsoft Entra ID</h2>
+          <p class="objetivo">É aqui que a Microsoft passa a reconhecer a ferramenta e a deixá-la conversar com o SharePoint.</p>
+        </div>
+        <div class="etapa-meta"><span class="selo onde">portal.azure.com</span><span class="selo">25 min</span></div>
+      </div>
+      <div class="etapa-corpo">
+        <p class="etapa-intro">
+          Esta é a etapa mais longa e a que mais dá errado — não porque seja difícil, mas porque
+          tem um passo que quase todo mundo esquece (o número 5). Faça na ordem.
+        </p>
+        <ol class="passos">
+          <li><p>No <a href="https://portal.azure.com" target="_blank" rel="noopener">portal.azure.com</a>, busque por <b>Microsoft Entra ID</b> e vá em <span class="clique">Registros de aplicativo</span> › <span class="clique">Novo registro</span>.</p></li>
+          <li><p><b>Nome:</b> <span class="campo">GS2 — Processos Societários</span>.</p>
+              <p><b>Tipos de conta suportados:</b> <i>Apenas contas neste diretório organizacional</i>.</p>
+              <p><b>URI de Redirecionamento:</b> escolha a plataforma <b>Aplicativo de página única (SPA)</b> e digite <span class="campo">https://app.gs2negocios.com.br/auth.html</span>. Clique em <span class="clique">Registrar</span>.</p></li>
+          <li><p>Ainda em <span class="clique">Autenticação</span>, clique em <span class="clique">Adicionar URI</span> e acrescente também <span class="campo">http://localhost:5173/auth.html</span> — é o que permite testar na sua máquina.</p></li>
+          <li><p>Vá em <span class="clique">Permissões de API</span> › <span class="clique">Adicionar uma permissão</span> › <b>Microsoft Graph</b> › <b>Permissões delegadas</b>. Marque <span class="campo">User.Read</span> e <span class="campo">Sites.ReadWrite.All</span>.</p>
+              <p>Depois clique em <span class="clique">Conceder consentimento do administrador para GS2</span>. As duas linhas devem ficar com um visto verde.</p></li>
+          <li><p><b>O passo esquecido.</b> Vá em <span class="clique">Expor uma API</span>:</p>
+              <p>— clique em <span class="clique">Adicionar</span> ao lado do URI do aplicativo e aceite o valor sugerido (<span class="campo">api://…</span>);</p>
+              <p>— clique em <span class="clique">Adicionar um escopo</span>, nomeie <span class="campo">access_as_user</span>, marque <i>Administradores e usuários</i>, preencha os textos de consentimento com algo como “Acessar os processos societários” e salve;</p>
+              <p>— volte em <span class="clique">Permissões de API</span> › <span class="clique">Adicionar uma permissão</span> › <b>Minhas APIs</b> › escolha o próprio <b>GS2 — Processos Societários</b> › marque <span class="campo">access_as_user</span> › adicione e <b>conceda o consentimento</b> de novo.</p></li>
+          <li><p>Volte em <span class="clique">Visão geral</span> e anote os dois códigos. Você vai usá-los nas etapas 5 e 6:</p>
+              <pre><span class="cmt">ID do aplicativo (cliente)  →  usado como clientId</span>
+<span class="cmt">ID do diretório (locatário) →  usado como tenantId</span></pre></li>
+        </ol>
+
+        <div class="confere">
+          <span class="ic">✓</span>
+          <div>
+            <h4>Como saber que deu certo</h4>
+            <p>Na tela <b>Permissões de API</b> devem aparecer <b>três</b> linhas, todas com “Concedido para GS2” em verde: <code>User.Read</code>, <code>Sites.ReadWrite.All</code> e <code>access_as_user</code>. Se forem só duas, o passo 5 não foi concluído.</p>
+          </div>
+        </div>
+
+        <div class="nota atencao">
+          <span class="ic">◆</span>
+          <span><b>Por que o passo 5 existe.</b> As duas primeiras permissões deixam a ferramenta falar com o SharePoint. A terceira deixa a ferramenta falar com o <i>próprio backend dela</i>, que guarda os processos. Sem ela, você consegue entrar, mas o painel aparece vazio e o diagnóstico acusa erro <b>401</b>.</span>
+        </div>
+      </div>
+      <div class="etapa-pe"><label><input type="checkbox" data-marca="2"> Etapa concluída</label></div>
+    </section>
+
+    <section class="etapa" id="e3" data-etapa="3">
+      <div class="etapa-cab">
+        <div class="etapa-num">3</div>
+        <div class="etapa-tit">
+          <h2>Criar o banco de dados</h2>
+          <p class="objetivo">É onde os processos passam a viver — o que hoje some quando você fecha o navegador.</p>
+        </div>
+        <div class="etapa-meta"><span class="selo onde">portal.azure.com</span><span class="selo">10 min</span></div>
+      </div>
+      <div class="etapa-corpo">
+        <ol class="passos">
+          <li><p><span class="clique">Criar um recurso</span> › busque <b>Azure Cosmos DB</b> › <span class="clique">Criar</span> › escolha <b>Azure Cosmos DB for NoSQL</b>.</p></li>
+          <li><p><b>Tipo de capacidade:</b> <b>Sem servidor (Serverless)</b>. É o que faz você pagar por uso em vez de uma mensalidade fixa.</p>
+              <p><b>Região:</b> Brazil South. <b>Nome da conta:</b> algo como <span class="campo">gs2-processos</span>.</p></li>
+          <li><p>Crie e espere terminar (uns 5 minutos). <b>Não crie banco nem contêiner à mão</b> — a ferramenta cria sozinha na primeira vez que rodar.</p>
+              <p>Ela cria o banco <span class="campo">gs2processos</span> com cinco contêineres: <code>processos</code> (o estado de cada processo), <code>cadastros</code> (usuários, requerentes, pessoas, modelos), <code>auditoria</code> (a trilha), <code>acervo</code> (o retrato do que está arquivado no SharePoint) e <code>replica</code> (a etapa 2, ainda desligada).</p></li>
+          <li><p>Quando terminar, entre no recurso, vá em <span class="clique">Chaves</span> e deixe anotados o <b>URI</b> e a <b>CHAVE PRIMÁRIA</b>. Você usa na etapa 5.</p></li>
+        </ol>
+
+        <div class="confere">
+          <span class="ic">✓</span>
+          <div>
+            <h4>Como saber que deu certo</h4>
+            <p>O recurso aparece com status <b>Online</b> e a tela <b>Chaves</b> mostra o URI no formato <code>https://gs2-processos.documents.azure.com:443/</code>.</p>
+          </div>
+        </div>
+
+        <div class="nota atencao">
+          <span class="ic">◆</span>
+          <span><b>Sobre a chave.</b> Usar a chave da conta é o caminho mais rápido para começar, e é o que este manual segue. Existe um caminho melhor — dar identidade própria ao aplicativo, sem senha nenhuma guardada — que vale fazer depois, com calma. Está descrito em <code>docs/implantacao.md</code>, no repositório.</span>
+        </div>
+      </div>
+      <div class="etapa-pe"><label><input type="checkbox" data-marca="3"> Etapa concluída</label></div>
+    </section>
+
+    <section class="etapa" id="e4" data-etapa="4">
+      <div class="etapa-cab">
+        <div class="etapa-num">4</div>
+        <div class="etapa-tit">
+          <h2>Criar a publicação, ligada ao GitHub</h2>
+          <p class="objetivo">A partir daqui, todo envio de código para o GitHub publica sozinho.</p>
+        </div>
+        <div class="etapa-meta"><span class="selo onde">portal.azure.com</span><span class="selo">15 min</span></div>
+      </div>
+      <div class="etapa-corpo">
+        <ol class="passos">
+          <li><p><span class="clique">Criar um recurso</span> › busque <b>Aplicativo Web Estático</b> (Static Web App) › <span class="clique">Criar</span>.</p></li>
+          <li><p><b>Nome:</b> <span class="campo">gs2-processos</span>. <b>Plano:</b> <b>Gratuito</b> — ele já inclui o backend e atende de sobra.</p></li>
+          <li><p>Em <b>Detalhes da implantação</b>, escolha <b>GitHub</b>, autorize o Azure e selecione a sua organização, o repositório <b>gs2-processos-societarios</b> e o branch <b>main</b>.</p></li>
+          <li><p>Em <b>Detalhes de build</b>, escolha o predefinido <b>Personalizado</b> e preencha exatamente assim:</p>
+              <pre>Local do aplicativo   <b>web</b>
+Local da API          <b>api</b>
+Local de saída        <span class="cmt">(deixe vazio)</span></pre>
+              <p>Esses três campos dizem ao Azure onde está a ferramenta e onde está o backend. Errar aqui é a causa mais comum de “publicou mas a página não abre”.</p></li>
+          <li><p>Crie. O Azure escreve sozinho um arquivo de automação no seu repositório e dispara a primeira publicação.</p></li>
+          <li><p>No GitHub, abra a aba <span class="clique">Actions</span> e acompanhe. A primeira leva de 2 a 4 minutos e termina com um visto verde.</p></li>
+        </ol>
+
+        <div class="confere">
+          <span class="ic">✓</span>
+          <div>
+            <h4>Como saber que deu certo</h4>
+            <p>Na <b>Visão geral</b> do Static Web App há um endereço terminado em <code>.azurestaticapps.net</code>. Abra: a tela de login da ferramenta aparece, com a foto e a frase da marca. Ela ainda vai dizer <b>modo demonstração</b> — é o esperado, resolve na etapa 6.</p>
+          </div>
+        </div>
+      </div>
+      <div class="etapa-pe"><label><input type="checkbox" data-marca="4"> Etapa concluída</label></div>
+    </section>
+
+    <section class="etapa" id="e5" data-etapa="5">
+      <div class="etapa-cab">
+        <div class="etapa-num">5</div>
+        <div class="etapa-tit">
+          <h2>Configurar o backend</h2>
+          <p class="objetivo">Aqui o backend descobre quem valida os logins e onde fica o banco.</p>
+        </div>
+        <div class="etapa-meta"><span class="selo onde">portal.azure.com</span><span class="selo">10 min</span></div>
+      </div>
+      <div class="etapa-corpo">
+        <ol class="passos">
+          <li><p>No Static Web App, vá em <span class="clique">Configuração</span> › <span class="clique">Configurações do aplicativo</span>.</p></li>
+          <li><p>Adicione uma por uma, com <span class="clique">+ Adicionar</span>:</p></li>
+        </ol>
+        <div class="rolagem">
+          <table>
+            <thead><tr><th>Nome</th><th>Valor</th><th>De onde vem</th></tr></thead>
+            <tbody>
+              <tr><td><code>GS2_TENANT_ID</code> <b>·&nbsp;obrigatória</b></td><td>o ID do diretório</td><td>etapa 2, passo 6</td></tr>
+              <tr><td><code>GS2_CLIENT_ID</code> <b>·&nbsp;obrigatória</b></td><td>o ID do aplicativo</td><td>etapa 2, passo 6</td></tr>
+              <tr><td><code>GS2_BANCO</code> <b>·&nbsp;obrigatória</b></td><td><code>cosmos</code></td><td>fixo — escrito exatamente assim, em minúsculas</td></tr>
+              <tr><td><code>COSMOS_ENDPOINT</code> <b>·&nbsp;obrigatória</b></td><td>o URI do Cosmos</td><td>etapa 3, passo 4</td></tr>
+              <tr><td><code>GS2_ADMINS</code></td><td><code>vinicius@gs2negocios.com.br</code></td><td>quem entra como administrador; separe por vírgula para incluir outros</td></tr>
+              <tr><td><code>COSMOS_KEY</code></td><td>a chave primária</td><td>etapa 3, passo 4</td></tr>
+              <tr><td><code>COSMOS_DB</code></td><td><code>gs2processos</code></td><td>fixo</td></tr>
+              <tr><td><code>GS2_RETENCAO_DIAS</code></td><td><code>0</code></td><td>prazo de guarda de dado pessoal; <code>0</code> = sem prazo definido</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="etapa-intro" style="margin:14px 0 0;">Ao terminar, clique em <span class="clique">Salvar</span> no topo. O backend reinicia sozinho em poucos segundos.</p>
+
+        <div class="confere">
+          <span class="ic">✓</span>
+          <div>
+            <h4>Como saber que deu certo</h4>
+            <p>Abra <code>SEU-ENDEREÇO.azurestaticapps.net/api/saude</code> no navegador. Precisa vir <code>"modo":"entra"</code> e <code>"bancoOk":true</code>.</p>
+            <p><b>Se vier <code>"modo":"mal-configurada"</code></b>, falta <code>GS2_TENANT_ID</code> ou <code>GS2_CLIENT_ID</code> — e, nesse estado, o backend não autentica ninguém, de propósito. <b>Se vier <code>"modo":"local"</code></b>, alguém criou a variável <code>GS2_PERMITIR_DEMO</code> lá: apague agora, antes de qualquer outra coisa. <b>Se vier <code>"bancoOk":false</code></b>, o campo <code>bancoErro</code> na mesma resposta diz o que falta — <code>GS2_BANCO</code>, <code>COSMOS_ENDPOINT</code>, ou a permissão no Cosmos. Nesse estado todas as outras rotas respondem 503 até você corrigir.</p>
+            <p>Essa resposta é enxuta de propósito: o endereço do banco, a contagem de registros e o estado da réplica só aparecem para quem entra como administrador. Antes eles ficavam visíveis para qualquer um na internet.</p>
+          </div>
+        </div>
+
+        <div class="nota perigo">
+          <span class="ic">■</span>
+          <span><b>A chave do Cosmos é segredo.</b> Ela vive só aqui, nas configurações do Azure. Nunca coloque num arquivo do repositório — quem tem essa chave lê e escreve todo o banco.</span>
+        </div>
+
+        <div class="nota perigo">
+          <span class="ic">■</span>
+          <span><b>Nunca crie a variável <code>GS2_PERMITIR_DEMO</code> no Azure.</b> Ela existe só para o servidor de teste da sua máquina, que escuta apenas em <code>127.0.0.1</code>. No Azure, ela faz o backend voltar a aceitar <b>identidade declarada por cabeçalho</b> — qualquer pessoa na internet passaria a ler todos os processos e todos os CPFs, sem senha nenhuma, e <code>/api/saude</code> ainda anunciaria essa condição.</span>
+        </div>
+
+        <div class="nota atencao">
+          <span class="ic">◆</span>
+          <span><b>Por que quatro variáveis são obrigatórias agora.</b> Até setembro de 2026 o backend “se virava” quando faltava alguma: sem os IDs do Entra ele caía em modo demonstração; sem o Cosmos, gravava num disco temporário que some a cada reinício. Nos dois casos <i>parecia</i> funcionar. Depois da auditoria de segurança, ele passou a recusar as duas coisas — <b>errar uma variável agora derruba o backend, e é assim que tem de ser</b>. Prefira o erro barulhento à ferramenta publicada aberta.</span>
+        </div>
+      </div>
+      <div class="etapa-pe"><label><input type="checkbox" data-marca="5"> Etapa concluída</label></div>
+    </section>
+
+    <section class="etapa" id="e6" data-etapa="6">
+      <div class="etapa-cab">
+        <div class="etapa-num">6</div>
+        <div class="etapa-tit">
+          <h2>Ligar o login de verdade</h2>
+          <p class="objetivo">O momento em que a ferramenta sai do modo demonstração.</p>
+        </div>
+        <div class="etapa-meta"><span class="selo onde">Mac + GitHub</span><span class="selo">10 min</span></div>
+      </div>
+      <div class="etapa-corpo">
+        <ol class="passos">
+          <li><p>Na sua pasta, abra <span class="campo">web/config.js</span> em qualquer editor de texto.</p></li>
+          <li><p>Preencha as duas linhas vazias com os códigos da etapa 2 e salve:</p>
+              <pre>window.GS2_CONFIG_OVERRIDE = {
+  tenantId: '<b>cole aqui o ID do diretório</b>',
+  clientId: '<b>cole aqui o ID do aplicativo</b>',
+  clientesViaEntra: <b>false</b>,   // true quando for liberar acesso a clientes
+  ...
+};</pre>
+              <p><span class="campo">clientesViaEntra</span> decide como o cliente externo entra. Com <b>false</b>, a aba <b>Cliente</b> fica bloqueada e explica isso na tela — é o certo enquanto você não for liberar acesso externo. Com <b>true</b>, o cliente entra pela janela da Microsoft, como a equipe. <b>Não existe mais o meio-termo</b>: até setembro de 2026, com <b>false</b> em produção, bastava <i>conhecer</i> o e-mail de um cliente cadastrado para entrar como ele.</p></li>
+          <li><p>Envie a mudança:</p>
+              <pre>cd ~/Desktop/Ferramentas/Societário
+git add web/config.js
+git commit -m "Configura o Entra ID de produção"
+git push</pre></li>
+          <li><p>Acompanhe no GitHub, aba <span class="clique">Actions</span>. Em 2 a 4 minutos está publicado.</p></li>
+        </ol>
+
+        <div class="confere">
+          <span class="ic">✓</span>
+          <div>
+            <h4>Como saber que deu certo</h4>
+            <p>Abra a ferramenta e recarregue. O aviso amarelo de <b>modo demonstração</b> na tela de login some. Ao entrar com <code>vinicius@gs2negocios.com.br</code>, abre a janela de login da Microsoft — é ela que passa a autenticar.</p>
+          </div>
+        </div>
+
+        <div class="nota atencao">
+          <span class="ic">◆</span>
+          <span><b>Esses dois códigos não são segredo.</b> Eles ficam visíveis para qualquer pessoa que abrir a ferramenta, e é assim mesmo — servem para identificar o aplicativo, não para dar acesso. Por isso vão no repositório: é o que torna a publicação repetível.</span>
+        </div>
+      </div>
+      <div class="etapa-pe"><label><input type="checkbox" data-marca="6"> Etapa concluída</label></div>
+    </section>
+
+    <section class="etapa" id="e7" data-etapa="7">
+      <div class="etapa-cab">
+        <div class="etapa-num">7</div>
+        <div class="etapa-tit">
+          <h2>Apontar o endereço da GS2</h2>
+          <p class="objetivo">Trocar o endereço automático do Azure por app.gs2negocios.com.br.</p>
+        </div>
+        <div class="etapa-meta"><span class="selo onde">Azure + DNS</span><span class="selo">20 min + espera</span></div>
+      </div>
+      <div class="etapa-corpo">
+        <ol class="passos">
+          <li><p>No Static Web App, vá em <span class="clique">Domínios personalizados</span> › <span class="clique">Adicionar</span> › <b>Domínio personalizado no outro DNS</b>.</p>
+              <p>Digite <span class="campo">app.gs2negocios.com.br</span>. O Azure mostra um valor de CNAME — deixe a tela aberta.</p></li>
+          <li><p>No painel onde o domínio <b>gs2negocios.com.br</b> é administrado, crie um registro:</p>
+              <pre>Tipo   <b>CNAME</b>
+Nome   <b>app</b>
+Valor  <b>o endereço .azurestaticapps.net que o Azure mostrou</b>
+TTL    3600</pre></li>
+          <li><p>Volte ao Azure e clique em <span class="clique">Validar</span>. Se reclamar, espere: a propagação de DNS costuma levar de 15 minutos a algumas horas. Pode fechar e voltar depois.</p></li>
+          <li><p>Validado, o certificado de segurança é emitido sozinho em alguns minutos — o cadeado aparece no navegador sem você fazer nada.</p></li>
+          <li><p><b>Não esqueça deste:</b> volte ao Entra ID › <span class="clique">Autenticação</span> e confirme que <span class="campo">https://app.gs2negocios.com.br/auth.html</span> está na lista de URIs. Sem isso, o login recusa no endereço novo.</p></li>
+        </ol>
+
+        <div class="confere">
+          <span class="ic">✓</span>
+          <div>
+            <h4>Como saber que deu certo</h4>
+            <p><b>app.gs2negocios.com.br/login</b> abre a ferramenta com cadeado no navegador, e o login com a conta da GS2 funciona.</p>
+          </div>
+        </div>
+
+        <div class="nota atencao">
+          <span class="ic">◆</span>
+          <span><b>O site institucional não é tocado.</b> Estamos criando um endereço novo (<code>app.</code>), não mexendo em <code>gs2negocios.com.br</code>. Se quiser que <code>gs2negocios.com.br/login</code> leve à ferramenta, isso é um redirecionamento simples no site atual, feito depois.</span>
+        </div>
+      </div>
+      <div class="etapa-pe"><label><input type="checkbox" data-marca="7"> Etapa concluída</label></div>
+    </section>
+
+    <section class="etapa" id="e8" data-etapa="8">
+      <div class="etapa-cab">
+        <div class="etapa-num">8</div>
+        <div class="etapa-tit">
+          <h2>Conferir a integração e começar a usar</h2>
+          <p class="objetivo">Provar que grava mesmo no SharePoint, e trazer os processos que já estão em andamento.</p>
+        </div>
+        <div class="etapa-meta"><span class="selo onde">Na ferramenta</span><span class="selo">20 min</span></div>
+      </div>
+      <div class="etapa-corpo">
+        <ol class="passos">
+          <li><p>Entre como <code>vinicius@gs2negocios.com.br</code>. No canto superior direito, clique no <b>selo de ambiente</b> — ele abre o <b>Diagnóstico da integração</b>.</p></li>
+          <li><p>O diagnóstico roda as mesmas chamadas do dia a dia e mostra uma a uma. Todas devem ficar verdes até <b>“Pastas de cliente lidas”</b>, com uma contagem que bate com o SharePoint.</p>
+              <p>Se alguma falhar, ela diz exatamente o quê — inclusive qual endereço precisa estar registrado no Entra ID, que é o erro mais comum.</p></li>
+          <li><p>Clique em <span class="clique">Executar teste de gravação</span> e confirme. Isso cria de verdade uma pasta <span class="campo">Z - Testes da Ferramenta</span> no SharePoint, envia um arquivo e lê de volta.</p>
+              <p>Abra o SharePoint e veja a pasta lá. <b>É esta a prova de que a integração funciona.</b> Depois apague a pasta — a ferramenta nunca apaga nada sozinha.</p></li>
+          <li><p>O Painel abre com <b>zero processos</b>, e é assim mesmo: a ferramenta não traz exemplo nenhum embutido — nenhum processo, cliente ou requerente vem no código. Só o seu usuário administrador já está cadastrado. Os passos seguintes é que a enchem.</p></li>
+          <li><p>Vá em <span class="clique">Administração › Acervo do SharePoint</span> e clique em <span class="clique">Varrer todos os clientes</span>. <b>É este passo que enche o Painel de Clientes com dado real</b> — sem ele a ferramenta abre sabendo apenas os nomes das pastas.</p>
+              <p>Ela percorre, cliente por cliente, <span class="campo">03 - Societario › 03.01 - Contratos Sociais, CNPJ e QSA</span>, lê os <b>nomes</b> dos arquivos (tipo do ato, número da alteração, data, razão social) e abre <b>só dois documentos</b> por cliente — o Cartão CNPJ e o QSA mais recentes — para tirar deles CNPJ, endereço, natureza jurídica, CNAE e quadro societário. Contrato social não é aberto: é texto corrido, e leitura automática ali erra mais do que acerta.</p>
+              <p>De 40 a 60 clientes leva alguns minutos, e dá para parar no meio — o que já foi lido continua na tela. Quando terminar, <b>confira a tabela</b> e só então clique em <span class="clique">Gravar no banco</span>. Ela só lê o SharePoint, com a sua permissão, e não grava nada lá.</p></li>
+          <li><p>Vá em <span class="clique">Administração › Importar processos</span>, baixe a planilha modelo, preencha uma linha por processo em andamento e solte de volta na tela.</p>
+              <p>Ela confere linha por linha e mostra o que está certo e o que tem problema <b>antes</b> de gravar. Só <b>cliente</b> e <b>tipo</b> são obrigatórios.</p></li>
+          <li><p>Cadastre a equipe em <span class="clique">Administração › Usuários</span> e avise que o acesso está no ar.</p></li>
+        </ol>
+
+        <div class="confere">
+          <span class="ic">✓</span>
+          <div>
+            <h4>Como saber que deu certo</h4>
+            <p>Você cria um processo, fecha o navegador, abre de novo e ele continua lá. Um colega entra com o e-mail dele e vê o mesmo painel. O arquivo de teste apareceu no SharePoint. E o <b>Painel de Clientes</b> mostra as empresas com CNPJ, sócios e histórico de alterações vindos do acervo — não mais em branco.</p>
+          </div>
+        </div>
+      </div>
+      <div class="etapa-pe"><label><input type="checkbox" data-marca="8"> Etapa concluída</label></div>
+    </section>
+
+    <section class="depois">
+      <h2>Depois que estiver no ar</h2>
+      <p class="sub">Como as mudanças passam a acontecer.</p>
+      <p>
+        Você não vai mais rodar comando de publicação. O ciclo passa a ser sempre o mesmo, e o
+        ponto importante é que <b>você vê a mudança funcionando antes de ela chegar em produção</b>:
+        cada proposta de alteração ganha um endereço temporário próprio no Azure, com a ferramenta
+        rodando de verdade.
+      </p>
+      <div class="ciclo">
+        <span>Alteração num branch</span><i>→</i>
+        <span>Pull Request</span><i>→</i>
+        <span>Endereço de pré-visualização</span><i>→</i>
+        <span>Você testa</span><i>→</i>
+        <span>Merge</span><i>→</i>
+        <span>No ar</span>
+      </div>
+      <p>
+        Para pedir uma mudança, é só me chamar com a pasta conectada — eu edito, você lê o que
+        mudou e envia. O arquivo <code>CLAUDE.md</code> na raiz do repositório guarda as decisões
+        de arquitetura e as regras da marca, e é lido automaticamente pelas sessões futuras, para
+        que ninguém desfaça sem querer o que já foi decidido.
+      </p>
+      <p>
+        <b>Antes de cada envio, rode a bateria de testes.</b> São quatro arquivos, sem instalar
+        nada além do Node, e levam cerca de meio minuto:
+      </p>
+      <pre>cd ~/Desktop/Ferramentas/Societário
+node testes/interpretador-de-nomes.js   <span style="opacity:.6"># 28 nomes reais da sua biblioteca</span>
+node testes/montagem-da-ficha.js        <span style="opacity:.6"># ficha, histórico, Cartão CNPJ, QSA</span>
+node testes/seguranca-da-api.js         <span style="opacity:.6"># 36 verificações de permissão e acesso</span>
+node testes/estresse.js                 <span style="opacity:.6"># volume e entradas malformadas</span></pre>
+      <p>
+        São 84 verificações ao todo. O <code>seguranca-da-api.js</code> não é exercício teórico:
+        ele sobe o backend numa porta própria e tenta, uma a uma, as coisas que <b>não</b> podem
+        funcionar — entrar sem senha, ler o processo de outro cliente, apagar um cadastro pelo
+        identificador errado, ler um arquivo de fora da pasta pública. Cada linha dele corresponde
+        a uma falha que já existiu e foi corrigida em setembro de 2026. <b>Se algum falhar, não
+        envie</b> — me chame.
+      </p>
+      <p>
+        <b>A etapa 2 do projeto já está escrita e desligada:</b> a réplica que confere sozinha se
+        o que a ferramenta diz bate com o que está no SharePoint, e que destrava alertas de prazo
+        da Junta. Ligar é dar identidade própria ao backend e virar uma chave — o passo a passo
+        está em <code>docs/implantacao.md</code>, no repositório.
+      </p>
+    </section>
+
+    <section class="antes">
+      <h2>Quando alguma coisa não funcionar</h2>
+      <p class="sub">Os tropeços conhecidos e o que cada um significa.</p>
+      <div class="rolagem">
+        <table>
+          <thead><tr><th style="width:38%">O que você vê</th><th>O que é, e como resolver</th></tr></thead>
+          <tbody>
+            <tr><td>A ferramenta abre em <b>modo demonstração</b> mesmo publicada</td><td>O <code>web/config.js</code> subiu sem <code>tenantId</code> e <code>clientId</code>, ou o envio ainda não terminou. Confira na aba <b>Actions</b> do GitHub se a última publicação ficou verde.</td></tr>
+            <tr><td><code>AADSTS50011</code> — erro de redirecionamento</td><td>O endereço que a ferramenta usa não está registrado no Entra ID. O diagnóstico mostra o endereço exato — copie e cole, sem alterar nada, inclusive o <code>https</code>.</td></tr>
+            <tr><td>Entra, mas o painel fica <b>vazio</b> e o diagnóstico acusa <b>401</b></td><td>Faltou o passo 5 da etapa 2 — o escopo <code>access_as_user</code> ou o consentimento dele.</td></tr>
+            <tr><td>A janela de login abre e fecha sozinha</td><td>Bloqueador de pop-up do navegador. Libere o endereço da ferramenta.</td></tr>
+            <tr><td><b>Graph 403</b> ao listar as pastas</td><td>Falta o consentimento de administrador em <code>Sites.ReadWrite.All</code>, ou a conta usada não tem acesso ao site <code>/sites/clientes</code> no SharePoint.</td></tr>
+            <tr><td><b>Graph 404</b> no site</td><td>O endereço do SharePoint está errado no <code>config.js</code>. O correto é <code>gs2negociosmt.sharepoint.com</code> com o caminho <code>/sites/clientes</code>.</td></tr>
+            <tr><td>O selo do topo diz <b>“sem banco”</b></td><td>O backend não respondeu. Abra <code>/api/saude</code> no navegador e confira as variáveis da etapa 5.</td></tr>
+            <tr><td><code>/api/saude</code> responde <code>"modo":"local"</code></td><td><b>Trate como urgente.</b> Existe uma variável <code>GS2_PERMITIR_DEMO</code> nas configurações do Azure. Nesse estado o backend aceita identidade declarada, sem senha. Apague a variável, salve, e confira de novo.</td></tr>
+            <tr><td><code>/api/saude</code> responde <code>"modo":"mal-configurada"</code></td><td>Falta <code>GS2_TENANT_ID</code> ou <code>GS2_CLIENT_ID</code>. O backend não autentica ninguém assim — é a proteção funcionando, não um defeito.</td></tr>
+            <tr><td>Tudo responde <b>503</b> e <code>/api/saude</code> traz <code>"bancoOk":false</code></td><td>Leia o <code>bancoErro</code> na mesma resposta: falta <code>GS2_BANCO=cosmos</code>, <code>COSMOS_ENDPOINT</code>, ou a identidade não recebeu a função no Cosmos. Antes ele caía num banco temporário e os dados sumiam calados; agora ele para e avisa.</td></tr>
+            <tr><td>A aba <b>Cliente</b> diz que o acesso não foi habilitado</td><td>É o esperado com <code>clientesViaEntra: false</code> e o Entra ligado. Mude para <code>true</code> no <code>config.js</code> quando for liberar acesso externo.</td></tr>
+            <tr><td>A varredura do acervo lê o histórico, mas <b>nenhum CNPJ</b></td><td>O leitor de PDF não carregou — normalmente porque a rede do escritório bloqueia <code>cdnjs.cloudflare.com</code>. A linha do tempo continua saindo dos nomes de arquivo; o CNPJ e os sócios, não.</td></tr>
+            <tr><td>Uma tela some ou um botão não faz nada <b>só em produção</b></td><td>Provável bloqueio da política de segurança (CSP) do <code>staticwebapp.config.json</code>. Abra o console do navegador: chamada bloqueada por CSP não mostra erro na tela. Se um serviço externo novo foi acrescentado, ele precisa entrar na CSP.</td></tr>
+            <tr><td><b>“Falha na API. Código para o suporte: xxxx”</b></td><td>É o comportamento certo: a mensagem técnica não vai mais para a tela (ela entregava o endereço do banco). Procure esse código no log da Function para ver o detalhe.</td></tr>
+            <tr><td>A lista de clientes vem vazia</td><td>A ferramenta lê as pastas da raiz da biblioteca, ignorando pastas de uma letra só e as que começam com <code>Z -</code>. Se a organização das pastas mudou, me avise para ajustar.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="nota atencao">
+        <span class="ic">◆</span>
+        <span><b>O diagnóstico é sempre o primeiro lugar a olhar.</b> Ele roda as chamadas reais e diz qual delas falhou e por quê — em vez de você adivinhar entre o Entra ID, o Azure e o SharePoint.</span>
+      </div>
+    </section>
+
+    <section class="glossario">
+      <h2>Os nomes que aparecem no caminho</h2>
+      <p class="sub">Traduzidos para o que significam neste projeto.</p>
+      <dl>
+        <div><dt>GitHub</dt><dd>Onde o código fica guardado, com histórico de quem mudou o quê e quando.</dd></div>
+        <div><dt>Repositório</dt><dd>A pasta do projeto dentro do GitHub.</dd></div>
+        <div><dt>Commit e push</dt><dd>Registrar uma alteração e enviá-la para o GitHub.</dd></div>
+        <div><dt>Microsoft Entra ID</dt><dd>O antigo Azure AD: o sistema que guarda as contas do Microsoft 365 da GS2 e valida os logins.</dd></div>
+        <div><dt>Static Web App</dt><dd>O serviço do Azure que hospeda a ferramenta e o backend juntos, no mesmo endereço.</dd></div>
+        <div><dt>Cosmos DB</dt><dd>O banco de dados onde os processos ficam guardados.</dd></div>
+        <div><dt>Microsoft Graph</dt><dd>A porta oficial da Microsoft pela qual a ferramenta lê e grava no SharePoint.</dd></div>
+        <div><dt>CNAME</dt><dd>O registro de DNS que faz <code>app.gs2negocios.com.br</code> apontar para o Azure.</dd></div>
+        <div><dt>Pull Request</dt><dd>Uma proposta de mudança, com o que mudou visível lado a lado, antes de virar realidade.</dd></div>
+        <div><dt>Permissão delegada</dt><dd>A ferramenta age <i>em nome de quem está logado</i> — quem não enxerga uma pasta no SharePoint também não enxerga por aqui.</dd></div>
+      </dl>
+    </section>
+
+  </main>
+</div>
+
+<footer class="rodape">
+  Manual de implantação da ferramenta de Processos Societários · GS2 Negócios ·
+  revisado em <b>08 de setembro de 2026</b>, depois da auditoria de segurança.
+  O passo a passo técnico completo, incluindo a etapa 2 (réplica do SharePoint), está em
+  <code>docs/implantacao.md</code>, dentro do repositório.
+</footer>
+
+<script>
+  const TOTAL = 8;
+  const caixas = Array.prototype.slice.call(document.querySelectorAll('[data-marca]'));
+  let estado = {};
+  let guardar = function(){};
+
+  function pintar(){
+    let n = 0;
+    caixas.forEach(function(c){
+      const id = c.getAttribute('data-marca');
+      const feita = !!estado[id];
+      c.checked = feita;
+      c.closest('.etapa').classList.toggle('feita', feita);
+      const link = document.querySelector('.trilho a[data-ir="' + id + '"]');
+      if(link){
+        link.classList.toggle('pronto', feita);
+        const num = link.querySelector('.n');
+        if(num) num.textContent = feita ? '✓' : id;
+      }
+      if(feita) n++;
+    });
+    document.getElementById('feitas').textContent = n;
+    document.getElementById('barra').style.width = (n / TOTAL * 100) + '%';
+  }
+
+  caixas.forEach(function(c){
+    c.addEventListener('change', function(){
+      estado[c.getAttribute('data-marca')] = c.checked;
+      pintar();
+      guardar();
+    });
+  });
+  pintar();
+
+  /* O progresso é guardado no armazenamento da página quando disponível, para
+     sobreviver a fechar o navegador e aparecer também para quem estiver
+     ajudando na implantação. Sem ele, as marcações valem só nesta aba — a
+     página funciona igual. */
+  (function(){
+    if(!window.claude || typeof claude.use !== 'function') return;
+    claude.use('db').then(function(db){
+      if(!db) return;
+      const doc = db.doc('progresso/implantacao');
+      guardar = function(){
+        try{ doc.set({ passos: estado, em: new Date().toISOString() }); }catch(e){}
+      };
+      doc.get().then(function(atual){
+        if(atual && atual.passos){ estado = atual.passos; pintar(); }
+      }).catch(function(){});
+      try{
+        doc.onSnapshot(function(d){
+          if(d && d.passos){ estado = d.passos; pintar(); }
+        });
+      }catch(e){}
+    }).catch(function(){});
+  })();
+</script>
+
+</body></html>

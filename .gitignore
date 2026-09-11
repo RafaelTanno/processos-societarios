@@ -1,0 +1,19 @@
+# Banco local de teste (gerado pelo servidor-local.js)
+.dados/
+
+# Dependências
+node_modules/
+
+# Segredos do ambiente — NUNCA versionar (pode conter COSMOS_KEY)
+api/local.settings.json
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.log
+
+# NOTA: web/config.js É versionado de propósito.
+# tenantId e clientId são identificadores públicos numa página estática —
+# qualquer pessoa que abre a ferramenta os enxerga. Versioná-los é o que torna
+# o deploy reproduzível. Segredo de verdade vai nas configurações do
+# Static Web App, nunca aqui.

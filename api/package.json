@@ -1,0 +1,20 @@
+{
+  "name": "gs2-processos-api",
+  "version": "1.0.0",
+  "description": "API da ferramenta de Processos Societários da GS2 — Azure Functions sobre Azure Static Web Apps",
+  "main": "index.js",
+  "scripts": {
+    "start": "func start",
+    "local": "node servidor-local.js",
+    "teste": "node testes/testar-api.js"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.16.2",
+    "@azure/cosmos": "^4.10.0",
+    "@azure/identity": "^4.13.2",
+    "jose": "^6.2.12"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
