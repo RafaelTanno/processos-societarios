@@ -45,8 +45,9 @@ const GS2_CONFIG = {
   escopos: ['User.Read', 'Sites.ReadWrite.All'],
 
   /* Página de retorno do login. Precisa estar registrada no Entra ID como
-     "URI de Redirecionamento" (plataforma SPA). Vazio = <origem>/auth.html,
-     que é uma página em branco publicada junto com a ferramenta. */
+     "URI de Redirecionamento" (plataforma SPA). Vazio = <origem>/login.
+     O fluxo é por REDIRECT (ver GS2Auth.entrar), então a volta precisa cair
+     numa página que carrega a ferramenta — não numa página em branco. */
   redirectUri: '',
 
   /* Clientes externos também entram pelo Entra ID (convidados B2B)?
@@ -108,7 +109,7 @@ const GS2Auth = {
       auth: {
         clientId: GS2_CONFIG.clientId,
         authority: 'https://login.microsoftonline.com/' + GS2_CONFIG.tenantId,
-        redirectUri: GS2_CONFIG.redirectUri || (location.origin + '/auth.html')
+        redirectUri: GS2_CONFIG.redirectUri || (location.origin + '/login')
       },
       cache: { cacheLocation: 'sessionStorage', storeAuthStateInCookie: false }
     });
@@ -125,14 +126,22 @@ const GS2Auth = {
     return c && c.length ? c[0] : null;
   },
 
+  /* Login por REDIRECT, não por pop-up.
+     O MSAL v5 quebrou o fluxo de pop-up: a janela autentica, volta para o
+     redirectUri e fica aberta, sem devolver o resultado ao opener (depende
+     da Storage Access API, que o navegador nega). A promise nunca resolve e
+     a tela fica presa em "Entrando…" para sempre.
+     Ver AzureAD/microsoft-authentication-library-for-js#8281 — sem correção
+     upstream até 09/2026. O redirect não usa esse mecanismo e funciona.
+     Esta função NÃO retorna: a página navega para a Microsoft e volta na
+     inicialização, onde handleRedirectPromise() em iniciar() conclui o login
+     e js/inicializacao.js coloca a pessoa na sessão. */
   async entrar(emailSugerido){
     await this.iniciar();
     const req = { scopes: GS2_CONFIG.escopos, prompt: 'select_account' };
     if(emailSugerido) req.loginHint = emailSugerido;
-    const r = await this.app.loginPopup(req);
-    this.conta = r.account;
-    this.app.setActiveAccount(r.account);
-    return r.account;
+    await this.app.loginRedirect(req);
+    return null;
   },
 
   async token(escopos){
@@ -145,8 +154,10 @@ const GS2Auth = {
       const r = await this.app.acquireTokenSilent(req);
       return r.accessToken;
     }catch(e){
-      const r = await this.app.acquireTokenPopup(req);
-      return r.accessToken;
+      /* mesmo motivo de entrar(): pop-up do MSAL v5 não devolve resultado.
+         O redirect recarrega a página e a renovação conclui na volta. */
+      await this.app.acquireTokenRedirect(req);
+      throw new Error('Renovando a sessão Microsoft…');
     }
   },
 
@@ -154,7 +165,7 @@ const GS2Auth = {
     if(!this.real() || !this.app) return;
     const conta = this.conta || this.contaEmCache();
     this.conta = null;
-    if(conta){ try{ await this.app.logoutPopup({ account: conta }); }catch(e){} }
+    if(conta){ try{ await this.app.logoutRedirect({ account: conta }); }catch(e){} }
   },
 
   emailDaConta(conta){
