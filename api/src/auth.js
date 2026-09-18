@@ -25,6 +25,29 @@ const cfg = require('./config');
 let jose = null;
 let jwks = null;
 
+/* Por que a última recusa aconteceu.
+   Sem isto, um token recusado vira 401 mudo e não há como distinguir
+   "assinatura inválida" de "não consegui falar com a Microsoft" — foi o
+   que travou o diagnóstico de 18/09/2026 por horas. É um CÓDIGO curto,
+   nunca a mensagem crua: a mensagem do jose/fetch carrega hostname e
+   caminho, que é justamente o que não pode ir para a tela. */
+let ultimoMotivo = '';
+
+function motivoDaRecusa() { return ultimoMotivo; }
+
+/* Traduz a falha para um código estável, sem detalhe de infraestrutura. */
+function classificar(e) {
+  const codigo = String((e && (e.code || e.name)) || '');
+  if (codigo.includes('ERR_JWKS_NO_MATCHING_KEY')) return 'chave-nao-encontrada';
+  if (codigo.includes('ERR_JWS_SIGNATURE_VERIFICATION_FAILED')) return 'assinatura';
+  if (codigo.includes('ERR_JWT_EXPIRED')) return 'expirado';
+  if (codigo.includes('ERR_JWT_CLAIM_VALIDATION_FAILED')) return 'claim:' + String((e && e.claim) || '');
+  if (codigo.includes('ERR_JOSE_GENERIC')) return 'jose';
+  /* falha de rede ao buscar o JWKS aparece como TypeError/FetchError */
+  if (codigo.includes('TypeError') || codigo.includes('Fetch')) return 'rede-jwks';
+  return codigo || 'desconhecido';
+}
+
 function carregarJose() {
   if (!jose) jose = require('jose');
   return jose;
@@ -53,8 +76,10 @@ async function identificar(cabecalhos) {
   const bruto = cabecalhos['authorization'] || cabecalhos['Authorization'] || '';
   const token = bruto.replace(/^Bearer\s+/i, '').trim();
 
+  ultimoMotivo = '';
+
   /* Mal configurada: não autentica ninguém, em vez de cair na demo. */
-  if (cfg.malConfigurada) return null;
+  if (cfg.malConfigurada) { ultimoMotivo = 'mal-configurada'; return null; }
 
   if (cfg.modoLocal) {
     /* demonstração: identidade declarada, sem validação criptográfica */
@@ -68,7 +93,7 @@ async function identificar(cabecalhos) {
     };
   }
 
-  if (!token) return null;
+  if (!token) { ultimoMotivo = 'sem-token'; return null; }
 
   try {
     const j = carregarJose();
@@ -85,18 +110,18 @@ async function identificar(cabecalhos) {
       algorithms: ['RS256'],
       clockTolerance: 30
     });
-    if (payload.tid && payload.tid !== cfg.tenantId) return null;
+    if (payload.tid && payload.tid !== cfg.tenantId) { ultimoMotivo = 'tenant'; return null; }
 
     /* Access token de verdade traz o escopo delegado. Sem isso, qualquer
        token do mesmo tenant com a audiência certa passaria. */
     const escopos = String(payload.scp || '').split(/\s+/);
-    if (!escopos.includes('access_as_user')) return null;
+    if (!escopos.includes('access_as_user')) { ultimoMotivo = 'escopo'; return null; }
 
     /* `email` é atributo que o diretório de origem controla em convidado
        B2B — e o papel aqui é derivado do e-mail. Só valem os claims que
        o próprio tenant emite. */
     const email = String(payload.preferred_username || payload.upn || '').toLowerCase();
-    if (!email) return null;
+    if (!email) { ultimoMotivo = 'sem-email'; return null; }
     return {
       email,
       nome: payload.name || email,
@@ -105,6 +130,9 @@ async function identificar(cabecalhos) {
       modo: 'entra'
     };
   } catch (e) {
+    ultimoMotivo = classificar(e);
+    /* a mensagem crua só no log do servidor, nunca na resposta */
+    console.error('[auth] token recusado (' + ultimoMotivo + '):', e && e.message);
     return null;
   }
 }
@@ -132,4 +160,4 @@ function pode(usuario, acao) {
   return !!permitidos && permitidos.includes(usuario.papel);
 }
 
-module.exports = { identificar, pode, papelDe, REGRAS };
+module.exports = { identificar, pode, papelDe, motivoDaRecusa, REGRAS };

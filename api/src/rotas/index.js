@@ -8,7 +8,7 @@
    em sincronia.
    ===================================================================== */
 
-const { identificar } = require('../auth');
+const { identificar, motivoDaRecusa } = require('../auth');
 const { db } = require('../db');
 const auditoria = require('../auditoria');
 
@@ -77,7 +77,13 @@ async function despachar(pedido) {
     const publica = !!(opcoes && opcoes.publica);
     const usuario = await identificar(pedido.cabecalhos || {});
     if (!publica && !usuario) {
-      return { status: 401, corpo: { erro: 'Não autenticado. Entre de novo na ferramenta.' } };
+      /* `motivo` é um código curto (ver classificar() em auth.js), nunca a
+         mensagem crua — sem ele, 401 vira adivinhação, com ele o
+         diagnóstico da tela diz o que conferir. */
+      return {
+        status: 401,
+        corpo: { erro: 'Não autenticado. Entre de novo na ferramenta.', motivo: motivoDaRecusa() }
+      };
     }
 
     /* O banco abre aqui, antes do handler. Se ele estiver mal
