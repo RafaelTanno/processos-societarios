@@ -73,7 +73,17 @@ function papelDe(email) {
 
 /* Lê o token do cabeçalho Authorization e devolve a identidade, ou null. */
 async function identificar(cabecalhos) {
-  const bruto = cabecalhos['authorization'] || cabecalhos['Authorization'] || '';
+  /* O token vem em X-GS2-Auth, não em Authorization.
+     No Azure Static Web Apps o `Authorization` do cliente NÃO chega na
+     função gerenciada: a plataforma o descarta e injeta um próprio, com
+     outro algoritmo de assinatura — o sintoma é 100% das rotas
+     autenticadas respondendo 401 com a configuração toda correta
+     (investigado em 18/09/2026). `Authorization` continua sendo aceito
+     como segunda opção porque o servidor local de teste não tem essa
+     plataforma na frente. Qual cabeçalho carregou o token não afeta
+     segurança: ele é validado por assinatura do mesmo jeito. */
+  const bruto = cabecalhos['x-gs2-auth'] || cabecalhos['X-GS2-Auth']
+             || cabecalhos['authorization'] || cabecalhos['Authorization'] || '';
   const token = bruto.replace(/^Bearer\s+/i, '').trim();
 
   ultimoMotivo = '';

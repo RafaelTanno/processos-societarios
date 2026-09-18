@@ -216,7 +216,16 @@ const GS2Api = {
   async cabecalhos(){
     const h = {'Content-Type': 'application/json'};
     if(GS2Auth.real()){
-      try{ h['Authorization'] = 'Bearer ' + await GS2Auth.token(this.escoposApi()); }
+      try{
+        const t = 'Bearer ' + await GS2Auth.token(this.escoposApi());
+        /* X-GS2-Auth é o que a API lê de verdade: no Azure Static Web Apps
+           o cabeçalho Authorization do cliente é descartado pela plataforma
+           antes de chegar na função gerenciada (ver api/src/auth.js).
+           Authorization vai junto para o servidor local de teste, que não
+           tem essa plataforma na frente. */
+        h['X-GS2-Auth'] = t;
+        h['Authorization'] = t;
+      }
       catch(e){ /* sem token: a API responde 401 e a ferramenta cai para memória */ }
     } else if(currentUser && currentUser.email){
       /* modo demonstração/local: a API não tem como validar token nenhum,

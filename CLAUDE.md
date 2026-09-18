@@ -24,6 +24,18 @@ aqui, e a autoria do arquivo fica com o nome de quem arquivou. A identidade
 própria da API (etapa 2) tem permissão **somente de leitura**, e só no site
 `/sites/clientes`, via `Sites.Selected`.
 
+**O token da API viaja em `X-GS2-Auth`, não em `Authorization`.** No Azure
+Static Web Apps o cabeçalho `Authorization` enviado pelo navegador **não chega**
+na função gerenciada: a plataforma o descarta e injeta um próprio, assinado com
+outro algoritmo. O sintoma é cruel — 100% das rotas autenticadas respondem 401
+com tenantId, clientId, audiência, emissor, escopo e validade todos corretos, e
+o `/api/saude` (rota pública) funcionando normalmente. Diagnosticado em
+18/09/2026 mandando um JWT deliberadamente inválido: o erro devolvido era o
+mesmo de mandar lixo puro, provando que o cabeçalho do cliente era ignorado.
+`Authorization` continua aceito como segunda opção só por causa do
+`servidor-local.js`, que não tem a plataforma na frente. Não "simplifique"
+removendo o cabeçalho próprio.
+
 **Autoridade não se duplica.** O banco é a verdade sobre o **estado** do processo;
 o SharePoint é a verdade sobre o **documento**. A réplica existe para conferir e
 para deixar a tela rápida — nunca para discordar.
