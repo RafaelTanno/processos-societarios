@@ -45,17 +45,17 @@ function listarArquivos(dir, ext, achados) {
 }
 
 /* Handlers inline de verdade — não conta se "onclick=" aparece só dentro
-   de comentário (/* ... */ ou //), que é como este próprio arquivo e
-   alguns comentários de código citam o padrão antigo como referência
+   de um comentário de bloco ou de linha, que é como este próprio arquivo
+   e alguns comentários de código citam o padrão antigo como referência
    histórica.
 
-   Remove os comentários em duas passadas simples: primeiro os blocos
-   /* ... */ (multilinha, preservando as quebras de linha internas para a
+   Remove os comentários em duas passadas simples: primeiro os blocos de
+   comentário multilinha (preservando as quebras de linha internas para a
    numeração de linha do resultado continuar batendo com o arquivo
-   original), depois o // até o fim de cada linha. Não é um parser de JS
-   de verdade — não entende comentário dentro de string —, mas é
-   suficiente para este arquivo: o código real não tem "//" nem "/*" no
-   meio de um atributo onclick/onchange/etc.
+   original), depois o comentário de linha até o fim de cada linha. Não é
+   um parser de JS de verdade — não entende comentário dentro de string —,
+   mas é suficiente para este arquivo: o código real não tem barra-barra
+   nem barra-asterisco no meio de um atributo onclick/onchange/etc.
 
    A aspa logo depois do "=" é o que distingue o ATRIBUTO HTML
    onclick="..." (proibido) de uma atribuição de propriedade em JS como
