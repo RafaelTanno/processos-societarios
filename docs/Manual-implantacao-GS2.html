@@ -422,8 +422,8 @@ git push -u origin main</pre>
           <li><p>No <a href="https://portal.azure.com" target="_blank" rel="noopener">portal.azure.com</a>, busque por <b>Microsoft Entra ID</b> e vá em <span class="clique">Registros de aplicativo</span> › <span class="clique">Novo registro</span>.</p></li>
           <li><p><b>Nome:</b> <span class="campo">GS2 — Processos Societários</span>.</p>
               <p><b>Tipos de conta suportados:</b> <i>Apenas contas neste diretório organizacional</i>.</p>
-              <p><b>URI de Redirecionamento:</b> escolha a plataforma <b>Aplicativo de página única (SPA)</b> e digite <span class="campo">https://app.gs2negocios.com.br/auth.html</span>. Clique em <span class="clique">Registrar</span>.</p></li>
-          <li><p>Ainda em <span class="clique">Autenticação</span>, clique em <span class="clique">Adicionar URI</span> e acrescente também <span class="campo">http://localhost:5173/auth.html</span> — é o que permite testar na sua máquina.</p></li>
+              <p><b>URI de Redirecionamento:</b> escolha a plataforma <b>Aplicativo de página única (SPA)</b> e digite <span class="campo">https://app.gs2negocios.com.br/login</span>. Clique em <span class="clique">Registrar</span>.</p></li>
+          <li><p>Ainda em <span class="clique">Autenticação</span>, clique em <span class="clique">Adicionar URI</span> e acrescente também <span class="campo">http://localhost:5173/login</span> — é o que permite testar na sua máquina.</p></li>
           <li><p>Vá em <span class="clique">Permissões de API</span> › <span class="clique">Adicionar uma permissão</span> › <b>Microsoft Graph</b> › <b>Permissões delegadas</b>. Marque <span class="campo">User.Read</span> e <span class="campo">Sites.ReadWrite.All</span>.</p>
               <p>Depois clique em <span class="clique">Conceder consentimento do administrador para GS2</span>. As duas linhas devem ficar com um visto verde.</p></li>
           <li><p><b>O passo esquecido.</b> Vá em <span class="clique">Expor uma API</span>:</p>
@@ -643,7 +643,7 @@ Valor  <b>o endereço .azurestaticapps.net que o Azure mostrou</b>
 TTL    3600</pre></li>
           <li><p>Volte ao Azure e clique em <span class="clique">Validar</span>. Se reclamar, espere: a propagação de DNS costuma levar de 15 minutos a algumas horas. Pode fechar e voltar depois.</p></li>
           <li><p>Validado, o certificado de segurança é emitido sozinho em alguns minutos — o cadeado aparece no navegador sem você fazer nada.</p></li>
-          <li><p><b>Não esqueça deste:</b> volte ao Entra ID › <span class="clique">Autenticação</span> e confirme que <span class="campo">https://app.gs2negocios.com.br/auth.html</span> está na lista de URIs. Sem isso, o login recusa no endereço novo.</p></li>
+          <li><p><b>Não esqueça deste:</b> volte ao Entra ID › <span class="clique">Autenticação</span> e confirme que <span class="campo">https://app.gs2negocios.com.br/login</span> está na lista de URIs. Sem isso, o login recusa no endereço novo.</p></li>
         </ol>
 
         <div class="confere">

@@ -41,19 +41,19 @@ Object.assign(App, {
           <div class="field span2"><label>Razão social pretendida</label>
             <input type="text" data-f="razaoSocial" id="aberturaRazaoSocial" value="${get('razaoSocial')}"
                    placeholder="Digite a razão social e saia do campo — a ferramenta vai propor criar a pasta no SharePoint"
-                   onblur="App.checarPastaSharePoint(this.value)">
+                   data-blur-action="checarPastaSharePoint" data-blur-value-from="value">
             <div id="pastaStatusBox"></div>
           </div>
           <div class="field"><label>Nome fantasia</label><input type="text" data-f="nomeFantasia" value="${get('nomeFantasia')}"></div>
           <div class="field"><label>Tipo societário</label><select data-f="tipoSocietario">${['LTDA','EIRELI','Sociedade Anônima','MEI','Sociedade Simples'].map(o=>`<option ${get('tipoSocietario')===o?'selected':''}>${o}</option>`).join('')}</select></div>
           <div class="field"><label>Capital social (R$)</label>
-            <input type="text" inputmode="numeric" data-f="capital" data-moeda="1" value="${this.formatarMoeda(get('capital'))}" placeholder="0,00" oninput="App.aplicarMascaraMoeda(this)"></div>
+            <input type="text" inputmode="numeric" data-f="capital" data-moeda="1" value="${this.formatarMoeda(get('capital'))}" placeholder="0,00" data-action="aplicarMascaraMoeda" data-event="input" data-value-from="element"></div>
           <div class="field"><label>Regime tributário pretendido</label><select data-f="regime">${['Simples Nacional','Lucro Presumido','Lucro Real'].map(o=>`<option ${get('regime')===o?'selected':''}>${o}</option>`).join('')}</select></div>
           <div class="field"><label>Data prevista de início</label><input type="date" data-f="dataPrevista" value="${get('dataPrevista')}"></div>
           <div class="field span2">
             <label>CNAE principal</label>
             <div class="cnae-picker">
-              <input type="text" id="cnaePrincipalSearch" placeholder="Buscar por código ou descrição da atividade (base oficial IBGE)..." oninput="App.searchCnae('principal', this.value)" onfocus="App.searchCnae('principal', this.value)" onblur="setTimeout(()=>App.closeCnaeResults('principal'),150)">
+              <input type="text" id="cnaePrincipalSearch" placeholder="Buscar por código ou descrição da atividade (base oficial IBGE)..." data-action="searchCnae" data-args='["principal"]' data-event="input" data-value-from="value" data-focus-action="searchCnae" data-focus-args='["principal"]' data-focus-value-from="value" data-blur-action="closeCnaeResults" data-blur-args='["principal"]' data-blur-delay="150">
               <div class="cnae-results" id="cnaePrincipalResults"></div>
               <div class="cnae-selected" id="cnaePrincipalSelected"></div>
             </div>
@@ -61,7 +61,7 @@ Object.assign(App, {
           <div class="field span2">
             <label>CNAEs secundários</label>
             <div class="cnae-picker">
-              <input type="text" id="cnaeSecundariosSearch" placeholder="Buscar atividade e clicar para adicionar..." oninput="App.searchCnae('secundarios', this.value)" onfocus="App.searchCnae('secundarios', this.value)" onblur="setTimeout(()=>App.closeCnaeResults('secundarios'),150)">
+              <input type="text" id="cnaeSecundariosSearch" placeholder="Buscar atividade e clicar para adicionar..." data-action="searchCnae" data-args='["secundarios"]' data-event="input" data-value-from="value" data-focus-action="searchCnae" data-focus-args='["secundarios"]' data-focus-value-from="value" data-blur-action="closeCnaeResults" data-blur-args='["secundarios"]' data-blur-delay="150">
               <div class="cnae-results" id="cnaeSecundariosResults"></div>
               <div class="cnae-chips" id="cnaeSecundariosChips"></div>
             </div>
@@ -89,13 +89,13 @@ Object.assign(App, {
 
         ${this.caixa('socios','Sócios', `
           <div id="sociosList"></div>
-          <button class="add-socio" onclick="App.addSocio()">+ Adicionar sócio</button>`, {
+          <button class="add-socio" data-action="addSocio">+ Adicionar sócio</button>`, {
           resumo: (wizard.socios||[]).length ? this.escapeHtml(wizard.socios.map(s=>s.nome||'(sem nome)').join(' · ')) : 'nenhum sócio adicionado',
           ajuda: 'Um sócio pode ser pessoa física ou pessoa jurídica. Pessoa física: informe endereço e contato. Pessoa jurídica: cadastre um ou mais representantes legais, cada um com seu próprio endereço e contato. Se o CPF já constar na base de pessoas da GS2, os dados são preenchidos automaticamente.'
         })}
         ${this.caixa('administradores','Administradores da empresa', `
           <div id="administradoresList"></div>
-          <button class="add-socio" onclick="App.addAdministrador()">+ Adicionar administrador</button>`, {
+          <button class="add-socio" data-action="addAdministrador">+ Adicionar administrador</button>`, {
           resumo: (wizard.administradores||[]).length ? this.escapeHtml(wizard.administradores.map(a=>a.nome||'(sem nome)').join(' · ')) : 'nenhum administrador',
           ajuda: 'Pessoas com poder de administração da empresa (podem ou não ser sócios). Marque <b>Administrador</b> no cadastro de um sócio para trazê-lo automaticamente para cá.'
         })}`;
@@ -111,7 +111,7 @@ Object.assign(App, {
         <div class="form-grid wide">
           <div class="field"><label>Tipo(s) de alteração</label>
             <p class="view-sub" style="margin:-2px 0 6px;font-size:11.5px;">Marque o que muda nesta alteração. <b>Só os blocos correspondentes ficam liberados</b> — o resto do formulário fica bloqueado, para não alterar por engano um dado que não faz parte do ato.</p>
-            <div class="checks">${opts.map(o=>`<label class="check-item"><input type="checkbox" data-f="altTipo" value="${o}" ${((c.altTipo||[]).includes(o))?'checked':''} onchange="App.trocarTipoAlteracao()"> ${o}</label>`).join('')}</div>
+            <div class="checks">${opts.map(o=>`<label class="check-item"><input type="checkbox" data-f="altTipo" value="${o}" ${((c.altTipo||[]).includes(o))?'checked':''} data-action="trocarTipoAlteracao" data-event="change"> ${o}</label>`).join('')}</div>
           </div>
           <div class="field"><label>Descrição da alteração</label><textarea data-f="descricao">${get('descricao')}</textarea></div>
           <div class="field"><label>Data da assembleia / deliberação</label><input type="date" data-f="dataDeliberacao" value="${get('dataDeliberacao')}"></div>
@@ -131,9 +131,9 @@ Object.assign(App, {
         ${this.caixa('alt-capital','Capital social', `
           <div class="form-grid wide">
             <div class="field"><label>Capital social atual (R$)</label>
-              <input type="text" inputmode="numeric" data-f="capitalAtual" data-moeda="1" value="${this.formatarMoeda(get('capitalAtual'))}" placeholder="5.000,00" oninput="App.aplicarMascaraMoeda(this)"></div>
+              <input type="text" inputmode="numeric" data-f="capitalAtual" data-moeda="1" value="${this.formatarMoeda(get('capitalAtual'))}" placeholder="5.000,00" data-action="aplicarMascaraMoeda" data-event="input" data-value-from="element"></div>
             <div class="field"><label>Novo capital social (R$)</label>
-              <input type="text" inputmode="numeric" data-f="capital" data-moeda="1" value="${this.formatarMoeda(get('capital'))}" placeholder="50.000,00" oninput="App.aplicarMascaraMoeda(this)"></div>
+              <input type="text" inputmode="numeric" data-f="capital" data-moeda="1" value="${this.formatarMoeda(get('capital'))}" placeholder="50.000,00" data-action="aplicarMascaraMoeda" data-event="input" data-value-from="element"></div>
           </div>`, {classe:'bloco-alt', flag:'Alteração de capital social',
             resumo: this.escapeHtml([get('capitalAtual')?'de R$ '+get('capitalAtual'):'', get('capital')?'para R$ '+get('capital'):''].filter(Boolean).join(' ')) || '—'})}
 
@@ -142,7 +142,7 @@ Object.assign(App, {
             <div class="field span2">
               <label>CNAE principal</label>
               <div class="cnae-picker">
-                <input type="text" id="cnaePrincipalSearch" placeholder="Buscar por código ou descrição da atividade (base oficial IBGE)..." oninput="App.searchCnae('principal', this.value)" onfocus="App.searchCnae('principal', this.value)" onblur="setTimeout(()=>App.closeCnaeResults('principal'),150)">
+                <input type="text" id="cnaePrincipalSearch" placeholder="Buscar por código ou descrição da atividade (base oficial IBGE)..." data-action="searchCnae" data-args='["principal"]' data-event="input" data-value-from="value" data-focus-action="searchCnae" data-focus-args='["principal"]' data-focus-value-from="value" data-blur-action="closeCnaeResults" data-blur-args='["principal"]' data-blur-delay="150">
                 <div class="cnae-results" id="cnaePrincipalResults"></div>
                 <div class="cnae-selected" id="cnaePrincipalSelected"></div>
               </div>
@@ -150,7 +150,7 @@ Object.assign(App, {
             <div class="field span2">
               <label>CNAEs secundários</label>
               <div class="cnae-picker">
-                <input type="text" id="cnaeSecundariosSearch" placeholder="Buscar atividade e clicar para adicionar..." oninput="App.searchCnae('secundarios', this.value)" onfocus="App.searchCnae('secundarios', this.value)" onblur="setTimeout(()=>App.closeCnaeResults('secundarios'),150)">
+                <input type="text" id="cnaeSecundariosSearch" placeholder="Buscar atividade e clicar para adicionar..." data-action="searchCnae" data-args='["secundarios"]' data-event="input" data-value-from="value" data-focus-action="searchCnae" data-focus-args='["secundarios"]' data-focus-value-from="value" data-blur-action="closeCnaeResults" data-blur-args='["secundarios"]' data-blur-delay="150">
                 <div class="cnae-results" id="cnaeSecundariosResults"></div>
                 <div class="cnae-chips" id="cnaeSecundariosChips"></div>
               </div>
@@ -168,14 +168,14 @@ Object.assign(App, {
             <div class="field span2"><label>Sócios afetados</label><input type="text" data-f="sociosAfetados" value="${get('sociosAfetados')}" placeholder="nomes separados por vírgula"></div>
           </div>
           <div id="sociosList"></div>
-          <button class="add-socio" onclick="App.addSocio()">+ Adicionar sócio</button>`, {
+          <button class="add-socio" data-action="addSocio">+ Adicionar sócio</button>`, {
           classe:'bloco-alt', flag:'Entrada de sócio|Saída de sócio',
           ajuda:'Carregado do cadastro do cliente. Ajuste participações, inclua a entrada de um novo sócio ou remova quem está saindo.',
           resumo: (wizard.socios||[]).length ? this.escapeHtml(wizard.socios.map(x=>x.nome||'(sem nome)').join(' · ')) : 'nenhum sócio adicionado'})}
 
         ${this.caixa('alt-admin','Administração', `
           <div id="administradoresList"></div>
-          <button class="add-socio" onclick="App.addAdministrador()">+ Adicionar administrador</button>`, {
+          <button class="add-socio" data-action="addAdministrador">+ Adicionar administrador</button>`, {
           classe:'bloco-alt', flag:'Alteração de administração',
           ajuda:'Pessoas com poder de administração da empresa (podem ou não ser sócios).',
           resumo: (wizard.administradores||[]).length ? this.escapeHtml(wizard.administradores.map(x=>x.nome||'(sem nome)').join(' · ')) : 'nenhum administrador'})}
@@ -212,14 +212,14 @@ Object.assign(App, {
             <div class="field span2"><label>Nome da filial (identificação do estabelecimento)</label><input type="text" data-f="nomeFilial" placeholder="Ex.: LOJA CENTRO" value="${get('nomeFilial')}"></div>
             <div class="field"><label>Nome fantasia da filial</label><input type="text" data-f="nomeFantasiaFilial" value="${get('nomeFantasiaFilial')}"></div>
             <div class="field"><label>Capital destacado para a filial (R$)</label>
-              <input type="text" inputmode="numeric" data-f="capitalFilial" data-moeda="1" value="${this.formatarMoeda(get('capitalFilial'))}" placeholder="0,00 — deixe zerado se não houver destaque" oninput="App.aplicarMascaraMoeda(this)"></div>
+              <input type="text" inputmode="numeric" data-f="capitalFilial" data-moeda="1" value="${this.formatarMoeda(get('capitalFilial'))}" placeholder="0,00 — deixe zerado se não houver destaque" data-action="aplicarMascaraMoeda" data-event="input" data-value-from="element"></div>
             <div class="field"><label>Data prevista de início das atividades</label><input type="date" data-f="dataPrevista" value="${get('dataPrevista')}"></div>
             <div class="field span2"><label>Objeto social da filial</label>
               <textarea data-f="objetoFilial" placeholder="Costuma ser um recorte do objeto da matriz — descreva o que esta filial vai exercer">${get('objetoFilial')}</textarea></div>
             <div class="field span2">
               <label>CNAE principal da filial</label>
               <div class="cnae-picker">
-                <input type="text" id="cnaePrincipalSearch" placeholder="Buscar por código ou descrição da atividade (base oficial IBGE)..." oninput="App.searchCnae('principal', this.value)" onfocus="App.searchCnae('principal', this.value)" onblur="setTimeout(()=>App.closeCnaeResults('principal'),150)">
+                <input type="text" id="cnaePrincipalSearch" placeholder="Buscar por código ou descrição da atividade (base oficial IBGE)..." data-action="searchCnae" data-args='["principal"]' data-event="input" data-value-from="value" data-focus-action="searchCnae" data-focus-args='["principal"]' data-focus-value-from="value" data-blur-action="closeCnaeResults" data-blur-args='["principal"]' data-blur-delay="150">
                 <div class="cnae-results" id="cnaePrincipalResults"></div>
                 <div class="cnae-selected" id="cnaePrincipalSelected"></div>
               </div>
@@ -227,7 +227,7 @@ Object.assign(App, {
             <div class="field span2">
               <label>CNAEs secundários da filial</label>
               <div class="cnae-picker">
-                <input type="text" id="cnaeSecundariosSearch" placeholder="Buscar atividade e clicar para adicionar..." oninput="App.searchCnae('secundarios', this.value)" onfocus="App.searchCnae('secundarios', this.value)" onblur="setTimeout(()=>App.closeCnaeResults('secundarios'),150)">
+                <input type="text" id="cnaeSecundariosSearch" placeholder="Buscar atividade e clicar para adicionar..." data-action="searchCnae" data-args='["secundarios"]' data-event="input" data-value-from="value" data-focus-action="searchCnae" data-focus-args='["secundarios"]' data-focus-value-from="value" data-blur-action="closeCnaeResults" data-blur-args='["secundarios"]' data-blur-delay="150">
                 <div class="cnae-results" id="cnaeSecundariosResults"></div>
                 <div class="cnae-chips" id="cnaeSecundariosChips"></div>
               </div>
@@ -252,7 +252,7 @@ Object.assign(App, {
 
         ${this.caixa('fil-admin','Administrador responsável pela filial', `
           <div id="administradoresList"></div>
-          <button class="add-socio" onclick="App.addAdministrador()">+ Adicionar administrador</button>`, {
+          <button class="add-socio" data-action="addAdministrador">+ Adicionar administrador</button>`, {
           resumo: (wizard.administradores||[]).length ? this.escapeHtml(wizard.administradores.map(a=>a.nome||'(sem nome)').join(' · ')) : 'nenhum administrador',
           ajuda:'Opcional. Nas alterações reais que serviram de base, a abertura de filial vinha junto com a nomeação de administradores — inclua aqui quem responde pelo novo estabelecimento.'})}`;
       this.renderAdministradores();
@@ -283,7 +283,7 @@ Object.assign(App, {
         <h4 style="margin:0 0 10px;font-size:13px;color:var(--dark);">Grupo econômico</h4>
         <div class="form-grid">
           <div class="field"><label>Esta empresa faz parte de um grupo econômico?</label>
-            <select data-f="grupoEconomico" onchange="App.toggleGrupoEconomico(this.value)">
+            <select data-f="grupoEconomico" data-action="toggleGrupoEconomico" data-event="change" data-value-from="value">
               <option value="Não" ${get('grupoEconomico')==='Sim'?'':'selected'}>Não</option>
               <option value="Sim" ${get('grupoEconomico')==='Sim'?'selected':''}>Sim</option>
             </select>
@@ -621,25 +621,25 @@ Object.assign(App, {
       <div class="field">
         <label>CEP</label>
         <div style="display:flex;gap:8px;">
-          <input type="text" id="${prefix}-cep" placeholder="00000-000" maxlength="9" value="${g('cep')}" oninput="App.formatCepGenerico(this,'${prefix}')" onblur="App.autoBuscarCepGenerico('${prefix}')">
-          <button type="button" class="btn ghost" style="white-space:nowrap;" onclick="App.buscarCepGenerico('${prefix}')">Buscar</button>
+          <input type="text" id="${prefix}-cep" placeholder="00000-000" maxlength="9" value="${g('cep')}" data-action="formatCepGenerico" data-args='${this.attrJson([prefix])}' data-event="input" data-value-from="element" data-blur-action="autoBuscarCepGenerico" data-blur-args='${this.attrJson([prefix])}'>
+          <button type="button" class="btn ghost" style="white-space:nowrap;" data-action="buscarCepGenerico" data-args='${this.attrJson([prefix])}'>Buscar</button>
         </div>
         <div id="${prefix}-cepStatus" style="font-size:11px;color:var(--muted);margin-top:4px;min-height:14px;"></div>
       </div>
-      <div class="field"><label>Número</label><input type="text" id="${prefix}-numero" value="${g('numero')}" onchange="App.setEndereco('${prefix}','numero',this.value)"></div>
-      <div class="field span2"><label>Logradouro (rua/avenida)</label><input type="text" id="${prefix}-logradouro" value="${g('logradouro')}" onchange="App.setEndereco('${prefix}','logradouro',this.value)"></div>
-      <div class="field"><label>Bairro</label><input type="text" id="${prefix}-bairro" value="${g('bairro')}" onchange="App.setEndereco('${prefix}','bairro',this.value)"></div>
-      <div class="field"><label>Complemento</label><input type="text" id="${prefix}-complemento" placeholder="Ex.: Quadra 16, Lote 08 e 09" value="${g('complemento')}" onchange="App.setEndereco('${prefix}','complemento',this.value)"></div>
-      <div class="field"><label>Município</label><input type="text" id="${prefix}-municipio" value="${g('municipio')}" onchange="App.setEndereco('${prefix}','municipio',this.value)"></div>
-      <div class="field"><label>UF</label><input type="text" id="${prefix}-uf" maxlength="2" style="text-transform:uppercase;" value="${g('uf')}" onchange="App.setEndereco('${prefix}','uf',this.value)"></div>
-      <div class="field span2"><label>Ponto de referência (opcional)</label><input type="text" id="${prefix}-pontoReferencia" value="${g('pontoReferencia')}" onchange="App.setEndereco('${prefix}','pontoReferencia',this.value)"></div>
+      <div class="field"><label>Número</label><input type="text" id="${prefix}-numero" value="${g('numero')}" data-action="setEndereco" data-args='${this.attrJson([prefix,'numero'])}' data-event="change" data-value-from="value"></div>
+      <div class="field span2"><label>Logradouro (rua/avenida)</label><input type="text" id="${prefix}-logradouro" value="${g('logradouro')}" data-action="setEndereco" data-args='${this.attrJson([prefix,'logradouro'])}' data-event="change" data-value-from="value"></div>
+      <div class="field"><label>Bairro</label><input type="text" id="${prefix}-bairro" value="${g('bairro')}" data-action="setEndereco" data-args='${this.attrJson([prefix,'bairro'])}' data-event="change" data-value-from="value"></div>
+      <div class="field"><label>Complemento</label><input type="text" id="${prefix}-complemento" placeholder="Ex.: Quadra 16, Lote 08 e 09" value="${g('complemento')}" data-action="setEndereco" data-args='${this.attrJson([prefix,'complemento'])}' data-event="change" data-value-from="value"></div>
+      <div class="field"><label>Município</label><input type="text" id="${prefix}-municipio" value="${g('municipio')}" data-action="setEndereco" data-args='${this.attrJson([prefix,'municipio'])}' data-event="change" data-value-from="value"></div>
+      <div class="field"><label>UF</label><input type="text" id="${prefix}-uf" maxlength="2" style="text-transform:uppercase;" value="${g('uf')}" data-action="setEndereco" data-args='${this.attrJson([prefix,'uf'])}' data-event="change" data-value-from="value"></div>
+      <div class="field span2"><label>Ponto de referência (opcional)</label><input type="text" id="${prefix}-pontoReferencia" value="${g('pontoReferencia')}" data-action="setEndereco" data-args='${this.attrJson([prefix,'pontoReferencia'])}' data-event="change" data-value-from="value"></div>
     </div>`;
   },
   renderContatoBlock(prefix, contato){
     contato = contato || {};
     return `<div class="form-grid">
-      <div class="field"><label>E-mail</label><input type="text" id="${prefix}-email" value="${this.escapeHtml(contato.email||'')}" onchange="App.setContato('${prefix}','email',this.value)"></div>
-      <div class="field"><label>Telefone</label><input type="text" id="${prefix}-telefone" value="${this.escapeHtml(contato.telefone||'')}" onchange="App.setContato('${prefix}','telefone',this.value)"></div>
+      <div class="field"><label>E-mail</label><input type="text" id="${prefix}-email" value="${this.escapeHtml(contato.email||'')}" data-action="setContato" data-args='${this.attrJson([prefix,'email'])}' data-event="change" data-value-from="value"></div>
+      <div class="field"><label>Telefone</label><input type="text" id="${prefix}-telefone" value="${this.escapeHtml(contato.telefone||'')}" data-action="setContato" data-args='${this.attrJson([prefix,'telefone'])}' data-event="change" data-value-from="value"></div>
     </div>`;
   },
   resolveEntity(prefix){
@@ -667,7 +667,7 @@ Object.assign(App, {
     this.espelharSeAdministrador();
     this.agendarSalvarRascunho();
   },
-  formatCepGenerico(el, prefix){
+  formatCepGenerico(prefix, el){
     let v = el.value.replace(/\D/g,'').slice(0,8);
     if(v.length>5) v = v.slice(0,5)+'-'+v.slice(5);
     el.value = v;
@@ -834,7 +834,7 @@ Object.assign(App, {
       return;
     }
     const handler = target==='principal' ? 'pickCnaePrincipal' : 'addCnaeSecundario';
-    box.innerHTML = matches.map(m=>`<div class="cnae-result" onmousedown="event.preventDefault();App.${handler}('${m.id}')"><b>${m.cod}</b>${m.desc}</div>`).join('');
+    box.innerHTML = matches.map(m=>`<div class="cnae-result" data-mousedown-action="${handler}" data-mousedown-args='${this.attrJson([m.id])}'><b>${m.cod}</b>${m.desc}</div>`).join('');
     box.classList.add('open');
   },
   closeCnaeResults(target){
@@ -861,7 +861,7 @@ Object.assign(App, {
     if(!box) return;
     const v = wizard.campos.cnaePrincipal;
     box.innerHTML = v
-      ? `<span class="cnae-chip principal">${this.escapeHtml(v)}<button type="button" onclick="App.clearCnaePrincipal()">✕</button></span>`
+      ? `<span class="cnae-chip principal">${this.escapeHtml(v)}<button type="button" data-action="clearCnaePrincipal">✕</button></span>`
       : '<span class="cnae-hint">Nenhuma atividade principal selecionada ainda.</span>';
   },
   addCnaeSecundario(id){
@@ -887,7 +887,7 @@ Object.assign(App, {
     if(!box) return;
     const arr = wizard.campos.cnaeSecundarios || [];
     box.innerHTML = arr.length
-      ? arr.map((label,i)=>`<span class="cnae-chip">${this.escapeHtml(label)}<button type="button" onclick="App.removeCnaeSecundario(${i})">✕</button></span>`).join('')
+      ? arr.map((label,i)=>`<span class="cnae-chip">${this.escapeHtml(label)}<button type="button" data-action="removeCnaeSecundario" data-args='${this.attrJson([i])}'>✕</button></span>`).join('')
       : '<span class="cnae-hint">Nenhuma atividade secundária adicionada ainda.</span>';
   },
 
@@ -905,11 +905,11 @@ Object.assign(App, {
       if(!isPJ){
         extra = `
           <div class="form-grid" style="margin-top:12px;">
-            <div class="field"><label>RG (nº e órgão emissor)</label><input type="text" id="${prefix}-rg" placeholder="Ex.: 12842591 SSP MT" value="${this.escapeHtml(s.rg)}" oninput="App.updateSocio(${i},'rg',this.value)"></div>
-            ${this.camposEstadoCivil(prefix, s, `App.setEstadoCivilSocio(${i}, this.value)`, `App.setRegimeBensSocio(${i}, this.value)`)}
-            <div class="field span2"><label>Local de nascimento (naturalidade)</label><input type="text" id="${prefix}-naturalidade" placeholder="Ex.: JUINA, MT" value="${this.escapeHtml(s.naturalidade)}" oninput="App.updateSocio(${i},'naturalidade',this.value)"></div>
+            <div class="field"><label>RG (nº e órgão emissor)</label><input type="text" id="${prefix}-rg" placeholder="Ex.: 12842591 SSP MT" value="${this.escapeHtml(s.rg)}" data-action="updateSocio" data-args='${this.attrJson([i,'rg'])}' data-event="input" data-value-from="value"></div>
+            ${this.camposEstadoCivil(prefix, s, 'setEstadoCivilSocio', [i], 'setRegimeBensSocio', [i])}
+            <div class="field span2"><label>Local de nascimento (naturalidade)</label><input type="text" id="${prefix}-naturalidade" placeholder="Ex.: JUINA, MT" value="${this.escapeHtml(s.naturalidade)}" data-action="updateSocio" data-args='${this.attrJson([i,'naturalidade'])}' data-event="input" data-value-from="value"></div>
           </div>
-          ${this.flagAdministrador('socio-'+i, !!s.admin, `App.toggleAdminSocio(${i}, this.checked)`,
+          ${this.flagAdministrador('socio-'+i, !!s.admin, 'toggleAdminSocio', [i],
              'Inclui esta pessoa na administração da empresa repetindo nome, CPF, endereço e contato — sem digitar tudo de novo.')}
           ${this.renderCnhBox(prefix, s, 'do sócio')}
           <h5 style="font-size:12px;margin:14px 0 6px;color:var(--dark);">Endereço</h5>
@@ -925,13 +925,13 @@ Object.assign(App, {
             const rprefix = 'rep-'+i+'-'+j;
             const corpoRep = `
               <div class="form-grid">
-                <div class="field"><label>Nome do representante</label><input type="text" id="${rprefix}-nome" value="${this.escapeHtml(r.nome)}" oninput="App.updateRepresentante(${i},${j},'nome',this.value)"></div>
-                <div class="field"><label>CPF <span id="${rprefix}-cadastroBadge" style="display:none;color:var(--status-good);font-size:11px;font-weight:700;">✓ dados do cadastro aplicados</span></label><input type="text" value="${this.escapeHtml(r.cpf)}" oninput="App.updateRepresentante(${i},${j},'cpf',this.value)" onblur="App.autoFillPessoa('${rprefix}')"></div>
-                <div class="field"><label>RG (nº e órgão emissor)</label><input type="text" id="${rprefix}-rg" placeholder="Ex.: 12842591 SSP MT" value="${this.escapeHtml(r.rg)}" oninput="App.updateRepresentante(${i},${j},'rg',this.value)"></div>
-                ${this.camposEstadoCivil(rprefix, r, `App.setEstadoCivilRep(${i}, ${j}, this.value)`, `App.setRegimeBensRep(${i}, ${j}, this.value)`)}
-                <div class="field span2"><label>Local de nascimento (naturalidade)</label><input type="text" id="${rprefix}-naturalidade" placeholder="Ex.: JUINA, MT" value="${this.escapeHtml(r.naturalidade)}" oninput="App.updateRepresentante(${i},${j},'naturalidade',this.value)"></div>
+                <div class="field"><label>Nome do representante</label><input type="text" id="${rprefix}-nome" value="${this.escapeHtml(r.nome)}" data-action="updateRepresentante" data-args='${this.attrJson([i,j,'nome'])}' data-event="input" data-value-from="value"></div>
+                <div class="field"><label>CPF <span id="${rprefix}-cadastroBadge" style="display:none;color:var(--status-good);font-size:11px;font-weight:700;">✓ dados do cadastro aplicados</span></label><input type="text" value="${this.escapeHtml(r.cpf)}" data-action="updateRepresentante" data-args='${this.attrJson([i,j,'cpf'])}' data-event="input" data-value-from="value" data-blur-action="autoFillPessoa" data-blur-args='${this.attrJson([rprefix])}'></div>
+                <div class="field"><label>RG (nº e órgão emissor)</label><input type="text" id="${rprefix}-rg" placeholder="Ex.: 12842591 SSP MT" value="${this.escapeHtml(r.rg)}" data-action="updateRepresentante" data-args='${this.attrJson([i,j,'rg'])}' data-event="input" data-value-from="value"></div>
+                ${this.camposEstadoCivil(rprefix, r, 'setEstadoCivilRep', [i,j], 'setRegimeBensRep', [i,j])}
+                <div class="field span2"><label>Local de nascimento (naturalidade)</label><input type="text" id="${rprefix}-naturalidade" placeholder="Ex.: JUINA, MT" value="${this.escapeHtml(r.naturalidade)}" data-action="updateRepresentante" data-args='${this.attrJson([i,j,'naturalidade'])}' data-event="input" data-value-from="value"></div>
               </div>
-              ${this.flagAdministrador(rprefix, !!r.admin, `App.toggleAdminRep(${i}, ${j}, this.checked)`,
+              ${this.flagAdministrador(rprefix, !!r.admin, 'toggleAdminRep', [i,j],
                  'Inclui este representante na administração da empresa repetindo nome, CPF, endereço e contato.')}
               ${this.renderCnhBox(rprefix, r, 'do representante')}
               <h5 style="font-size:12px;margin:12px 0 6px;color:var(--dark);">Endereço</h5>
@@ -940,26 +940,26 @@ Object.assign(App, {
               ${this.renderContatoBlock(rprefix, r.contato)}`;
             return this.caixa('rep-'+i+'-'+j, 'Representante legal #'+(j+1), corpoRep, {
               resumo: this.resumoPessoa(r, false),
-              acoes: `<button type="button" class="btn ghost" onclick="event.stopPropagation(); App.removeRepresentante(${i},${j})">Remover representante</button>`
+              acoes: `<button type="button" class="btn ghost" data-action="removeRepresentante" data-args='${this.attrJson([i,j])}'>Remover representante</button>`
             });
           }).join('') || '<p class="view-sub" style="margin:0 0 8px;color:#b4463f;">Nenhum representante legal cadastrado ainda.</p>'}
-          <button class="add-socio" onclick="App.addRepresentante(${i})">+ Adicionar representante</button>`;
+          <button class="add-socio" data-action="addRepresentante" data-args='${this.attrJson([i])}'>+ Adicionar representante</button>`;
       }
       const corpo = `
         <div class="form-grid">
-          <div class="field"><label>Tipo</label><select onchange="App.updateSocio(${i},'tipo',this.value)">
+          <div class="field"><label>Tipo</label><select data-action="updateSocio" data-args='${this.attrJson([i,'tipo'])}' data-event="change" data-value-from="value">
             <option value="PF" ${!isPJ?'selected':''}>Pessoa Física</option>
             <option value="PJ" ${isPJ?'selected':''}>Pessoa Jurídica</option>
           </select></div>
-          <div class="field"><label>${isPJ?'Razão social':'Nome completo'}</label><input type="text" id="${prefix}-nome" value="${this.escapeHtml(s.nome)}" oninput="App.updateSocio(${i},'nome',this.value)"></div>
-          <div class="field"><label>${isPJ?'CNPJ':'CPF'} ${!isPJ?`<span id="${prefix}-cadastroBadge" style="display:none;color:var(--status-good);font-size:11px;font-weight:700;">✓ dados do cadastro aplicados</span>`:''}</label><input type="text" value="${this.escapeHtml(s.documento)}" oninput="App.updateSocio(${i},'documento',this.value)" ${!isPJ?`onblur="App.autoFillPessoa('${prefix}')"`:''}></div>
-          <div class="field"><label>% Participação</label><input type="text" value="${this.escapeHtml(s.perc)}" oninput="App.updateSocio(${i},'perc',this.value)"></div>
-          <div class="field"><label>Cargo</label><input type="text" value="${this.escapeHtml(s.cargo)}" oninput="App.updateSocio(${i},'cargo',this.value)"></div>
+          <div class="field"><label>${isPJ?'Razão social':'Nome completo'}</label><input type="text" id="${prefix}-nome" value="${this.escapeHtml(s.nome)}" data-action="updateSocio" data-args='${this.attrJson([i,'nome'])}' data-event="input" data-value-from="value"></div>
+          <div class="field"><label>${isPJ?'CNPJ':'CPF'} ${!isPJ?`<span id="${prefix}-cadastroBadge" style="display:none;color:var(--status-good);font-size:11px;font-weight:700;">✓ dados do cadastro aplicados</span>`:''}</label><input type="text" value="${this.escapeHtml(s.documento)}" data-action="updateSocio" data-args='${this.attrJson([i,'documento'])}' data-event="input" data-value-from="value" ${!isPJ?`data-blur-action="autoFillPessoa" data-blur-args='${this.attrJson([prefix])}'`:''}></div>
+          <div class="field"><label>% Participação</label><input type="text" value="${this.escapeHtml(s.perc)}" data-action="updateSocio" data-args='${this.attrJson([i,'perc'])}' data-event="input" data-value-from="value"></div>
+          <div class="field"><label>Cargo</label><input type="text" value="${this.escapeHtml(s.cargo)}" data-action="updateSocio" data-args='${this.attrJson([i,'cargo'])}' data-event="input" data-value-from="value"></div>
         </div>
         ${extra}`;
       return this.caixa('socio-'+i, (isPJ?'Sócio PJ':'Sócio')+' #'+(i+1), corpo, {
         resumo: this.resumoPessoa(s, isPJ),
-        acoes: `<button type="button" class="btn ghost" onclick="event.stopPropagation(); App.removeSocio(${i})">Remover sócio</button>`
+        acoes: `<button type="button" class="btn ghost" data-action="removeSocio" data-args='${this.attrJson([i])}'>Remover sócio</button>`
       });
     }).join('') || `<p class="view-sub">Nenhum sócio adicionado ainda.</p>`;
   },

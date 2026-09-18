@@ -1,9 +1,13 @@
 /* O objeto App — parte 4 de 6: estado civil, OCR da CNH, sócios e administradores. */
 
 Object.assign(App, {
-  selectEstadoCivil(prefix, valor, acao){
+  /* acaoMetodo/acaoArgs viram data-action/data-args (ver js/eventos.js): a
+     CSP sem 'unsafe-inline' não deixa mais montar onchange="App.x(...)" com
+     uma string de JS solta — o método e os argumentos fixos são declarados
+     à parte, e this.value chega sozinho por data-value-from. */
+  selectEstadoCivil(prefix, valor, acaoMetodo, acaoArgs){
     const opcoes = ['','Solteiro(a)','Casado(a)','União estável','Divorciado(a)','Separado(a) judicialmente','Viúvo(a)'];
-    return `<select id="${prefix}-estadoCivil" onchange="${acao}">
+    return `<select id="${prefix}-estadoCivil" data-action="${acaoMetodo}" data-args='${this.attrJson(acaoArgs)}' data-event="change" data-value-from="value">
       ${opcoes.map(o=>`<option value="${o}" ${((valor||'')===o)?'selected':''}>${o||'Selecione...'}</option>`).join('')}
     </select>`;
   },
@@ -14,18 +18,18 @@ Object.assign(App, {
      limpo automaticamente se o estado civil mudar para outro. */
   REGIMES_BENS: ['Comunhão parcial de bens','Comunhão universal de bens','Separação total de bens','Separação obrigatória de bens','Participação final nos aquestos'],
   exigeRegimeBens(estadoCivil){ return (estadoCivil||'') === 'Casado(a)'; },
-  selectRegimeBens(prefix, valor, acao){
-    return `<select id="${prefix}-regimeBens" onchange="${acao}">
+  selectRegimeBens(prefix, valor, acaoMetodo, acaoArgs){
+    return `<select id="${prefix}-regimeBens" data-action="${acaoMetodo}" data-args='${this.attrJson(acaoArgs)}' data-event="change" data-value-from="value">
       ${[''].concat(this.REGIMES_BENS).map(o=>`<option value="${o}" ${((valor||'')===o)?'selected':''}>${o||'Selecione o regime...'}</option>`).join('')}
     </select>`;
   },
   /* Bloco "Estado civil + Regime de bens", usado nos três cadastros. */
-  camposEstadoCivil(prefix, pessoa, acaoEstado, acaoRegime){
+  camposEstadoCivil(prefix, pessoa, acaoEstadoMetodo, acaoEstadoArgs, acaoRegimeMetodo, acaoRegimeArgs){
     const casado = this.exigeRegimeBens(pessoa.estadoCivil);
     return `
-      <div class="field"><label>Estado civil</label>${this.selectEstadoCivil(prefix, pessoa.estadoCivil, acaoEstado)}</div>
+      <div class="field"><label>Estado civil</label>${this.selectEstadoCivil(prefix, pessoa.estadoCivil, acaoEstadoMetodo, acaoEstadoArgs)}</div>
       ${casado ? `<div class="field"><label>Regime de bens <span style="color:var(--status-crit);font-weight:700;">obrigatório</span></label>
-        ${this.selectRegimeBens(prefix, pessoa.regimeBens, acaoRegime)}
+        ${this.selectRegimeBens(prefix, pessoa.regimeBens, acaoRegimeMetodo, acaoRegimeArgs)}
         ${!pessoa.regimeBens ? `<div style="font-size:11px;color:var(--status-crit);margin-top:4px;">Casado(a) sem regime de bens é exigência certa na Junta.</div>` : ''}
       </div>` : ''}`;
   },
@@ -43,9 +47,9 @@ Object.assign(App, {
   setRegimeBensAdmin(k, v){ wizard.administradores[k].regimeBens = v; this.renderAdministradores(); },
 
   /* Flag "Administrador" no cadastro da própria pessoa. */
-  flagAdministrador(prefix, marcado, acao, ajuda){
+  flagAdministrador(prefix, marcado, acaoMetodo, acaoArgs, ajuda){
     return `<label class="flag-admin" for="${prefix}-admin">
-      <input type="checkbox" id="${prefix}-admin" ${marcado?'checked':''} onchange="${acao}">
+      <input type="checkbox" id="${prefix}-admin" ${marcado?'checked':''} data-action="${acaoMetodo}" data-args='${this.attrJson(acaoArgs)}' data-event="change" data-value-from="checked">
       <span><b>Administrador</b><span class="ajuda">${this.escapeHtml(ajuda)}</span></span>
     </label>`;
   },
@@ -58,7 +62,7 @@ Object.assign(App, {
      ou equivalente) sobre o arquivo enviado, sem digitação manual. */
   renderCnhBox(prefix, pessoa, rotulo){
     const cnh = pessoa.cnh || null;
-    const inputFile = `<input type="file" id="fi-cnh-${prefix}" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="App.lerCnh('${prefix}', this.files)">`;
+    const inputFile = `<input type="file" id="fi-cnh-${prefix}" accept=".pdf,.jpg,.jpeg,.png" style="display:none" data-action="lerCnh" data-args='${this.attrJson([prefix])}' data-event="change" data-value-from="files">`;
     const rotuloFonte = {
       'pdf-texto':'camada de texto do PDF',
       'pdf-ocr':'OCR sobre a página do PDF',
@@ -87,8 +91,8 @@ Object.assign(App, {
               ? `<div style="font-size:11.5px;margin-top:5px;">A pasta desta empresa ainda está sendo criada — o arquivamento sai no relatório de envio do processo.</div>`
               : `<div style="font-size:11.5px;margin-top:5px;">Vinculada ao sócio na ficha de <b>${this.escapeHtml(cnh.arquivada.cliente)}</b>${cnh.arquivada.socioCriado?' (o sócio foi incluído na ficha)':''} — o <b>arquivamento no SharePoint acontece ao enviar o processo</b>.</div>`) : ''}
             <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
-              <button class="btn" style="padding:4px 11px;font-size:11px;" onclick="document.getElementById('fi-cnh-${prefix}').click()">Trocar arquivo</button>
-              <button class="btn" style="padding:4px 11px;font-size:11px;" onclick="App.verTextoCnh('${prefix}')">Ver texto extraído</button>
+              <button class="btn" style="padding:4px 11px;font-size:11px;" data-action="click-target" data-target="fi-cnh-${prefix}">Trocar arquivo</button>
+              <button class="btn" style="padding:4px 11px;font-size:11px;" data-action="verTextoCnh" data-args='${this.attrJson([prefix])}'>Ver texto extraído</button>
             </div>
           </span>
         </div>${inputFile}`;
@@ -106,8 +110,8 @@ Object.assign(App, {
           <span class="grow"><b>Não consegui extrair os dados de ${this.escapeHtml(cnh.arquivo)}.</b>
             <div style="font-size:11.5px;margin-top:3px;">${motivo}</div>
             <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
-              <button class="btn" style="padding:4px 11px;font-size:11px;" onclick="document.getElementById('fi-cnh-${prefix}').click()">Tentar outro arquivo</button>
-              <button class="btn" style="padding:4px 11px;font-size:11px;" onclick="App.verTextoCnh('${prefix}')">Ver diagnóstico</button>
+              <button class="btn" style="padding:4px 11px;font-size:11px;" data-action="click-target" data-target="fi-cnh-${prefix}">Tentar outro arquivo</button>
+              <button class="btn" style="padding:4px 11px;font-size:11px;" data-action="verTextoCnh" data-args='${this.attrJson([prefix])}'>Ver diagnóstico</button>
             </div>
           </span>
         </div>${inputFile}`;
@@ -118,7 +122,7 @@ Object.assign(App, {
         <label style="display:block;font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.03em;">
           CNH ${rotulo} <span class="ocr-tag">leitura automática</span>
         </label>
-        <div class="dropzone" id="dz-cnh-${prefix}" style="text-align:left;min-width:0;" onclick="document.getElementById('fi-cnh-${prefix}').click()">
+        <div class="dropzone" id="dz-cnh-${prefix}" style="text-align:left;min-width:0;" data-action="click-target" data-target="fi-cnh-${prefix}">
           Anexe a CNH em <b>PDF</b> (a CNH-e do app serve) ou uma <b>foto</b> — a ferramenta lê e preenche nome, CPF, RG, nascimento, local de nascimento, registro e validade
         </div>
         <div style="font-size:11px;color:var(--muted);margin-top:4px;">A leitura roda no seu próprio navegador: o documento não é enviado para nenhum servidor. Na primeira vez o OCR baixa o idioma (alguns segundos).</div>
@@ -806,7 +810,7 @@ Object.assign(App, {
           <div class="form-grid">
             <div class="field"><label>Nome completo</label><input type="text" value="${this.escapeHtml(a.nome)}" disabled></div>
             <div class="field"><label>CPF</label><input type="text" value="${this.escapeHtml(a.cpf)}" disabled></div>
-            <div class="field"><label>Cargo / função</label><input type="text" placeholder="Ex.: Sócio-Administrador" value="${this.escapeHtml(a.cargo)}" oninput="App.updateAdministrador(${k},'cargo',this.value)"></div>
+            <div class="field"><label>Cargo / função</label><input type="text" placeholder="Ex.: Sócio-Administrador" value="${this.escapeHtml(a.cargo)}" data-action="updateAdministrador" data-args='${this.attrJson([k,'cargo'])}' data-event="input" data-value-from="value"></div>
             <div class="field"><label>Estado civil</label><input type="text" value="${this.escapeHtml(a.estadoCivil||'')}" placeholder="— informe no quadro societário" disabled></div>
             ${this.exigeRegimeBens(a.estadoCivil) ? `<div class="field"><label>Regime de bens</label><input type="text" value="${this.escapeHtml(a.regimeBens||'')}" placeholder="— pendente no quadro societário" disabled></div>` : ''}
           </div>
@@ -820,10 +824,10 @@ Object.assign(App, {
 
       const corpoAdm = `
         <div class="form-grid">
-          <div class="field"><label>Nome completo</label><input type="text" id="${prefix}-nome" value="${this.escapeHtml(a.nome)}" oninput="App.updateAdministrador(${k},'nome',this.value)"></div>
-          <div class="field"><label>CPF <span id="${prefix}-cadastroBadge" style="display:none;color:var(--status-good);font-size:11px;font-weight:700;">✓ dados do cadastro aplicados</span></label><input type="text" value="${this.escapeHtml(a.cpf)}" oninput="App.updateAdministrador(${k},'cpf',this.value)" onblur="App.autoFillPessoa('${prefix}')"></div>
-          <div class="field"><label>Cargo / função</label><input type="text" placeholder="Ex.: Administrador, Diretor" value="${this.escapeHtml(a.cargo)}" oninput="App.updateAdministrador(${k},'cargo',this.value)"></div>
-          ${this.camposEstadoCivil(prefix, a, `App.setEstadoCivilAdmin(${k}, this.value)`, `App.setRegimeBensAdmin(${k}, this.value)`)}
+          <div class="field"><label>Nome completo</label><input type="text" id="${prefix}-nome" value="${this.escapeHtml(a.nome)}" data-action="updateAdministrador" data-args='${this.attrJson([k,'nome'])}' data-event="input" data-value-from="value"></div>
+          <div class="field"><label>CPF <span id="${prefix}-cadastroBadge" style="display:none;color:var(--status-good);font-size:11px;font-weight:700;">✓ dados do cadastro aplicados</span></label><input type="text" value="${this.escapeHtml(a.cpf)}" data-action="updateAdministrador" data-args='${this.attrJson([k,'cpf'])}' data-event="input" data-value-from="value" data-blur-action="autoFillPessoa" data-blur-args='${this.attrJson([prefix])}'></div>
+          <div class="field"><label>Cargo / função</label><input type="text" placeholder="Ex.: Administrador, Diretor" value="${this.escapeHtml(a.cargo)}" data-action="updateAdministrador" data-args='${this.attrJson([k,'cargo'])}' data-event="input" data-value-from="value"></div>
+          ${this.camposEstadoCivil(prefix, a, 'setEstadoCivilAdmin', [k], 'setRegimeBensAdmin', [k])}
         </div>
         <h5 style="font-size:12px;margin:14px 0 6px;color:var(--dark);">Endereço</h5>
         ${this.renderEnderecoBlock(prefix, a.endereco)}
@@ -831,7 +835,7 @@ Object.assign(App, {
         ${this.renderContatoBlock(prefix, a.contato)}`;
       return this.caixa('admin-'+k, 'Administrador #'+(k+1), corpoAdm, {
         resumo: this.resumoPessoa(a, false),
-        acoes: `<button type="button" class="btn ghost" onclick="event.stopPropagation(); App.removeAdministrador(${k})">Remover administrador</button>`
+        acoes: `<button type="button" class="btn ghost" data-action="removeAdministrador" data-args='${this.attrJson([k])}'>Remover administrador</button>`
       });
     }).join('') || `<p class="view-sub">Nenhum administrador adicionado ainda. Marque <b>Administrador</b> no cadastro de um sócio para trazê-lo automaticamente, ou cadastre alguém de fora do quadro societário no botão abaixo.</p>`;
   },

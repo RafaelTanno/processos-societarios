@@ -65,7 +65,6 @@
       "/api/*",
       "/vendor/*",
       "/config.js",
-      "/auth.html",
       "*.{png,jpg,svg,ico,css,js}"
     ]
   },
@@ -74,16 +73,11 @@
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-        "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://login.microsoftonline.com https://graph.microsoft.com https://cdnjs.cloudflare.com https://*.sharepoint.com https://brasilapi.com.br https://opencep.com; worker-src 'self' blob: https://cdnjs.cloudflare.com; frame-src https://login.microsoftonline.com; frame-ancestors 'none'; object-src 'none'; base-uri 'none'; form-action 'self' https://login.microsoftonline.com",
+        "Content-Security-Policy": "default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://login.microsoftonline.com https://graph.microsoft.com https://cdnjs.cloudflare.com https://*.sharepoint.com https://brasilapi.com.br https://opencep.com; worker-src 'self' blob: https://cdnjs.cloudflare.com; frame-src https://login.microsoftonline.com; frame-ancestors 'none'; object-src 'none'; base-uri 'none'; form-action 'self' https://login.microsoftonline.com",
     "Permissions-Policy": "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
   },
   "mimeTypes": {
     ".json": "application/json",
     ".js": "text/javascript"
-  },
-  "responseOverrides": {
-    "404": {
-      "rewrite": "/index.html"
-    }
   }
 }

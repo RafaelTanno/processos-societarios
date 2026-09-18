@@ -456,7 +456,7 @@ Object.assign(App, {
       <td><span class="badge ${st.cls}"><span class="dot"></span>${st.label}</span></td>
       <td>${this.escapeHtml(p.resp)}</td>
       <td>${this.jucematBadge(p.jucemat)} ${p.proprietarioNotificado ? '<span title="Proprietário notificado">✉️</span>' : ''}</td>
-      <td><button class="btn ghost" onclick="App.openJucematModal('${this.escapeAttr(p.id)}')">Acompanhar</button></td>
+      <td><button class="btn ghost" data-action="openJucematModal" data-args='${this.attrJson([p.id])}'>Acompanhar</button></td>
     </tr>`;
   },
   renderProcessosTable(){
@@ -481,8 +481,8 @@ Object.assign(App, {
         ${t.origem ? `<div class="tpl-origem">📚 ${this.escapeHtml(t.origem)} · <b>anonimizado</b>: nenhum dado de empresa, sócio, administrador ou endereço foi mantido</div>` : ''}
         <div class="ph-list">${t.placeholders.map(p=>`<span class="ph-tag">{{${p}}}</span>`).join('')}</div>
         <div class="tpl-actions">
-          <button class="btn ghost" onclick="App.navigate('novo','${this.escapeAttr(t.tipo)}')">Usar em novo processo</button>
-          <button class="btn ghost" onclick="App.deleteTemplate('${this.escapeAttr(t.id)}')" style="color:var(--status-crit);">Remover</button>
+          <button class="btn ghost" data-action="navigate" data-args='${this.attrJson(['novo', t.tipo])}'>Usar em novo processo</button>
+          <button class="btn ghost" data-action="deleteTemplate" data-args='${this.attrJson([t.id])}' style="color:var(--status-crit);">Remover</button>
         </div>
       </div>`;}).join('') || `<div class="empty-state"><div class="ic">📄</div>Nenhum modelo cadastrado ainda.</div>`;
   },
@@ -613,7 +613,7 @@ Object.assign(App, {
         <td style="color:var(--muted);font-size:12px;">${t.fonte}</td>
         <td>${t.versao}</td>
         <td>${t.atualizadoEm}</td>
-        <td><button class="btn ghost" id="btnUpd-${t.id}" onclick="App.forcarAtualizacaoTabela('${t.id}')">Forçar atualização</button></td>
+        <td><button class="btn ghost" id="btnUpd-${t.id}" data-action="forcarAtualizacaoTabela" data-args='${this.attrJson([t.id])}'>Forçar atualização</button></td>
       </tr>`).join('')
     }</tbody>`;
     this.renderAdminLog();
@@ -653,8 +653,8 @@ Object.assign(App, {
         <td><span class="badge ${u.status==='Ativo'?'good':'crit'}"><span class="dot"></span>${this.escapeHtml(u.status)}</span></td>
         <td>${this.escapeHtml(u.ultimoAcesso)}</td>
         <td style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="btn ghost" onclick="App.openUsuarioModal('${this.escapeAttr(u.id)}')">Editar</button>
-          <button class="btn ghost" onclick="App.toggleUsuarioStatus('${this.escapeAttr(u.id)}')" style="color:${u.status==='Ativo'?'var(--status-crit)':'var(--status-good)'};">${u.status==='Ativo'?'Desativar':'Ativar'}</button>
+          <button class="btn ghost" data-action="openUsuarioModal" data-args='${this.attrJson([u.id])}'>Editar</button>
+          <button class="btn ghost" data-action="toggleUsuarioStatus" data-args='${this.attrJson([u.id])}' style="color:${u.status==='Ativo'?'var(--status-crit)':'var(--status-good)'};">${u.status==='Ativo'?'Desativar':'Ativar'}</button>
         </td>
       </tr>`).join('')
     }</tbody>`;
@@ -705,8 +705,8 @@ Object.assign(App, {
         <td style="color:var(--muted);font-size:12px;">${this.escapeHtml(r.telefone)}</td>
         <td><span class="badge ${r.status==='Ativo'?'good':'crit'}"><span class="dot"></span>${r.status}</span></td>
         <td style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="btn ghost" onclick="App.openRequerenteModal('${r.id}')">Editar</button>
-          <button class="btn ghost" onclick="App.toggleRequerenteStatus('${r.id}')" style="color:${r.status==='Ativo'?'var(--status-crit)':'var(--status-good)'};">${r.status==='Ativo'?'Desativar':'Ativar'}</button>
+          <button class="btn ghost" data-action="openRequerenteModal" data-args='${this.attrJson([r.id])}'>Editar</button>
+          <button class="btn ghost" data-action="toggleRequerenteStatus" data-args='${this.attrJson([r.id])}' style="color:${r.status==='Ativo'?'var(--status-crit)':'var(--status-good)'};">${r.status==='Ativo'?'Desativar':'Ativar'}</button>
         </td>
       </tr>`).join('')
     }</tbody>`;

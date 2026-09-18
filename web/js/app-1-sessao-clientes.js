@@ -39,11 +39,11 @@ const App = {
       box.className = 'login-modo real';
       box.innerHTML = `<b>Conectado ao Microsoft 365 da GS2.</b> Os documentos são lidos e gravados no SharePoint
         (<code>${GS2_CONFIG.sharepoint.sitePath}</code>) em nome de quem entrar.
-        <button onclick="App.abrirDiagnostico()">Testar a integração</button>`;
+        <button data-action="abrirDiagnostico">Testar a integração</button>`;
     } else {
       box.className = 'login-modo demo';
       box.innerHTML = `<b>Modo demonstração — nada é gravado no SharePoint.</b> ${this.escapeHtml(GS2Auth.motivoDemo())}
-        <button onclick="App.abrirDiagnostico()">Ver diagnóstico</button>`;
+        <button data-action="abrirDiagnostico">Ver diagnóstico</button>`;
     }
   },
   async entrarGS2(){
@@ -66,15 +66,12 @@ const App = {
 
     this.ocupadoLogin('btnEntrarGS2', true);
     try{
-      const conta = await GS2Auth.entrar(email);
-      const emailReal = GS2Auth.emailDaConta(conta);
-      if(!GS2Auth.ehDominioGS2(emailReal)){
-        await GS2Auth.sair();
-        this.erroLogin(`A conta usada (<b>${this.escapeHtml(emailReal)}</b>) não é do domínio @${GS2_CONFIG.dominioGS2}.`);
-        return;
-      }
-      this.login(GS2Auth.papelDe(emailReal), null, {nome: conta.name || emailReal, email: emailReal});
-      this.sincronizarClientes();
+      /* entrar() navega para a Microsoft (loginRedirect) e não devolve a
+         conta: a promise só resolve de novo se a navegação falhar antes de
+         sair da página. Quando a pessoa volta autenticada, é
+         js/inicializacao.js — não este await — que confere o domínio e
+         completa o login. */
+      await GS2Auth.entrar(email);
     }catch(e){
       const m = String(e && e.message || e);
       this.erroLogin(/user_cancelled|popup_window_error|BrowserAuthError/i.test(m)
@@ -99,11 +96,12 @@ const App = {
     if(GS2Auth.real() && GS2_CONFIG.clientesViaEntra){
       this.ocupadoLogin('btnEntrarCliente', true);
       try{
-        const conta = await GS2Auth.entrar(email);
-        const emailReal = GS2Auth.emailDaConta(conta);
-        const u = achar(emailReal);
-        if(!validar(u, emailReal)){ await GS2Auth.sair(); return; }
-        this.login('Cliente', u.id, {nome: u.nome, email: emailReal});
+        /* entrar() navega para a Microsoft (loginRedirect) e não devolve a
+           conta: a promise só resolve de novo se a navegação falhar antes
+           de sair da página. Quando a pessoa volta autenticada, é
+           js/inicializacao.js — não este await — que confere o cadastro de
+           usuário de cliente e completa o login. */
+        await GS2Auth.entrar(email);
       }catch(e){
         this.erroLogin('Não consegui autenticar: ' + this.escapeHtml(String(e && e.message || e)));
       }finally{
@@ -190,7 +188,7 @@ const App = {
       box.className = 'aviso-api';
       document.body.appendChild(box);
     }
-    box.innerHTML = `<b>⚠️ ${this.escapeHtml(msg)}</b> <button onclick="this.parentNode.remove()">fechar</button>`;
+    box.innerHTML = `<b>⚠️ ${this.escapeHtml(msg)}</b> <button data-action="remove-parent">fechar</button>`;
     box.style.display = 'block';
     clearTimeout(this._avisoApiTimer);
     this._avisoApiTimer = setTimeout(()=>{ if(box) box.style.display = 'none'; }, 9000);
@@ -259,7 +257,7 @@ const App = {
     add(GS2_CONFIG.tenantId ? 'ok' : 'erro', 'tenantId configurado', GS2_CONFIG.tenantId || 'vazio — defina no config.js');
     add(GS2_CONFIG.clientId ? 'ok' : 'erro', 'clientId configurado', GS2_CONFIG.clientId || 'vazio — defina no config.js');
     add('ok', 'URI de redirecionamento que precisa estar registrada no Entra ID',
-        GS2_CONFIG.redirectUri || ((location.origin || '') + '/auth.html'));
+        GS2_CONFIG.redirectUri || ((location.origin || '') + '/login'));
     add(GS2Auth.real() ? 'ok' : 'aviso', 'Modo de operação',
         GS2Auth.real() ? 'entra — login e SharePoint reais' : 'demo — ' + GS2Auth.motivoDemo());
 
@@ -354,6 +352,14 @@ const App = {
       add('aviso', 'Limpeza', `Apague a pasta "${pastaTeste}" no SharePoint quando terminar os testes — a ferramenta não apaga nada sozinha.`);
     }catch(e){ add('erro', 'Arquivo de teste enviado', e.message); }
   },
+  /* O teste de gravação cria de verdade uma pasta e um arquivo no SharePoint
+     da GS2 — por isso pede confirmação explícita antes de rodar. Isso vivia
+     como onclick="if(confirm(...))..." no index.html; a CSP sem
+     'unsafe-inline' não permite mais JS inline no atributo. */
+  confirmarGravacaoDiagnostico(){
+    const aviso = `Este teste CRIA de verdade uma pasta e um arquivo no SharePoint da GS2 (pasta "${GS2_CONFIG.sharepoint.pastaTestes}"). Continuar?`;
+    if(confirm(aviso)) this.rodarDiagnostico(true);
+  },
 
   /* Carga a partir do backend. Se ele não estiver no ar, a ferramenta segue
      em memória — o que já funcionava antes — e o selo do topo avisa. */
@@ -393,8 +399,8 @@ const App = {
           <b>exemplos embutidos na ferramenta</b> — estão só nesta tela, não foram gravados.
           Entre eles há <b>CPF e CNPJ reais</b> de clientes, então nada sobe sozinho: quem decide é você.
         </span>
-        <button class="btn" onclick="App.semearBanco()">Enviar os dados de exemplo</button>
-        <button class="btn ghost" onclick="document.getElementById('bannerSemente').innerHTML=''">Começar vazio</button>
+        <button class="btn" data-action="semearBanco">Enviar os dados de exemplo</button>
+        <button class="btn ghost" data-action="clear-target" data-target="bannerSemente">Começar vazio</button>
       </div>`;
   },
   async semearBanco(){
@@ -734,8 +740,8 @@ const App = {
         </div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;flex:none;">
-        <button class="btn primary" style="padding:6px 14px;font-size:12px;" onclick="App.retomarRascunho()">Retomar de onde parei</button>
-        <button class="btn ghost" style="padding:6px 14px;font-size:12px;" onclick="App.descartarRascunhoEConfirmar()">Descartar</button>
+        <button class="btn primary" style="padding:6px 14px;font-size:12px;" data-action="retomarRascunho">Retomar de onde parei</button>
+        <button class="btn ghost" style="padding:6px 14px;font-size:12px;" data-action="descartarRascunhoEConfirmar">Descartar</button>
       </div>`;
   },
 
@@ -863,7 +869,7 @@ const App = {
             <tbody>
               ${nomes.map(nome=>{
                 const r = resumo(nome);
-                return `<tr class="cli-linha" onclick="App.openClienteDetalhe('${this.escapeAttr(nome)}')">
+                return `<tr class="cli-linha" data-action="openClienteDetalhe" data-args='${this.attrJson([nome])}'>
                   <td>
                     <div style="font-weight:650;font-size:12.5px;">${this.escapeHtml(r.d.dadosCnpj.razaoSocial)}</div>
                     <div style="font-size:11px;color:var(--muted);">Última movimentação: ${this.escapeHtml(r.ult.data)} — ${this.escapeHtml(r.ult.evento)}</div>
@@ -889,7 +895,7 @@ const App = {
     grid.innerHTML = nomes.map(nome=>{
       const r = resumo(nome);
       return `
-        <div class="cli-card" onclick="App.openClienteDetalhe('${this.escapeAttr(nome)}')">
+        <div class="cli-card" data-action="openClienteDetalhe" data-args='${this.attrJson([nome])}'>
           <div class="cli-nome">${this.escapeHtml(r.d.dadosCnpj.razaoSocial)}</div>
           <div class="cli-cnpj">CNPJ ${this.escapeHtml(r.d.dadosCnpj.cnpj)}</div>
           <div class="cli-meta">
@@ -951,6 +957,13 @@ const App = {
         .replace(/[\r\n\u2028\u2029]/g, ' ')
     );
   },
+  /* Argumentos para data-args de um elemento gerado por template string (ver
+     js/eventos.js): serializa em JSON e escapa para caber dentro do atributo
+     HTML \u2014 inclusive quando o valor tem aspas, j\u00e1 que a CSP n\u00e3o deixa mais
+     usar onclick="..." com o argumento escapado "na m\u00e3o". */
+  attrJson(valor){
+    return this.escapeHtml(JSON.stringify(valor));
+  },
 
   openClienteDetalhe(nome){
     this.cliSel.nome = nome;
@@ -989,7 +1002,7 @@ const App = {
 
     el.innerHTML = `
       <div class="btn-row" style="margin:0 0 14px;justify-content:flex-start;">
-        <button class="btn" onclick="App.closeClienteDetalhe()">← Voltar para lista de empresas</button>
+        <button class="btn" data-action="closeClienteDetalhe">← Voltar para lista de empresas</button>
       </div>
 
       <div class="cli-hero">
@@ -1004,12 +1017,12 @@ const App = {
         </div>
         <div class="btn-row" style="margin:16px 0 0;justify-content:flex-start;">
           ${this.ehUsuarioCliente() ? `
-            <button class="btn primary" onclick="App.baixarTodos('${this.escapeAttr(nome)}')">⬇ Baixar todos os documentos</button>
-            <button class="btn" onclick="App.abrirCompartilhar('${this.escapeAttr(nome)}', null)">🔗 Compartilhar pasta societária</button>
+            <button class="btn primary" data-action="baixarTodos" data-args='${this.attrJson([nome])}'>⬇ Baixar todos os documentos</button>
+            <button class="btn" data-action="abrirCompartilhar" data-args='${this.attrJson([nome, null])}'>🔗 Compartilhar pasta societária</button>
           ` : `
-            <button class="btn primary" onclick="App.novaAlteracaoDoCliente('${this.escapeAttr(nome)}')">🔄 Nova alteração a partir da versão vigente</button>
-            <button class="btn" onclick="App.relerCartaoCnpj('${this.escapeAttr(nome)}')" id="btnReOcr">🔍 Reler Cartão CNPJ (OCR)</button>
-            <button class="btn" onclick="App.abrirCompartilhar('${this.escapeAttr(nome)}', null)">🔗 Compartilhar pasta societária</button>
+            <button class="btn primary" data-action="novaAlteracaoDoCliente" data-args='${this.attrJson([nome])}'>🔄 Nova alteração a partir da versão vigente</button>
+            <button class="btn" data-action="relerCartaoCnpj" data-args='${this.attrJson([nome])}' id="btnReOcr">🔍 Reler Cartão CNPJ (OCR)</button>
+            <button class="btn" data-action="abrirCompartilhar" data-args='${this.attrJson([nome, null])}'>🔗 Compartilhar pasta societária</button>
           `}
         </div>
       </div>
@@ -1067,7 +1080,7 @@ const App = {
                 const m = ALTERACAO_STATUS_META[a.status] || {label:a.status, cls:'info'};
                 const temDoc = a.documento && a.documento !== '—';
                 return `
-                <div class="tl-item ${i===this.cliSel.altIdx?'sel':''}" onclick="App.selecionarAlteracao(${i})">
+                <div class="tl-item ${i===this.cliSel.altIdx?'sel':''}" data-action="selecionarAlteracao" data-args='${this.attrJson([i])}'>
                   <div class="tl-ord">${a.ordem}ª alteração${i===alts.length-1?' · vigente':''}</div>
                   <div class="tl-ev">${this.escapeHtml(a.evento)}</div>
                   <div class="tl-meta">
@@ -1079,8 +1092,8 @@ const App = {
                   <div class="tl-doc">
                     <div class="tl-doc-nome" title="${this.escapeAttr(a.documento)}">📄 ${this.escapeHtml(a.documento)}</div>
                     <div class="tl-doc-acoes">
-                      <button class="btn" onclick="event.stopPropagation();App.baixarArquivo('${this.escapeAttr(nome)}','${this.escapeAttr(a.documento)}')">⬇ Baixar</button>
-                      <button class="btn" onclick="event.stopPropagation();App.compartilharArquivo('${this.escapeAttr(nome)}','${this.escapeAttr(a.documento)}')">🔗 Compartilhar</button>
+                      <button class="btn" data-action="baixarArquivo" data-args='${this.attrJson([nome, a.documento])}'>⬇ Baixar</button>
+                      <button class="btn" data-action="compartilharArquivo" data-args='${this.attrJson([nome, a.documento])}'>🔗 Compartilhar</button>
                     </div>
                   </div>` : `
                   <div class="tl-doc">
@@ -1114,9 +1127,9 @@ const App = {
                 </table>
                 <div style="margin-top:12px;display:flex;gap:9px;flex-wrap:wrap;align-items:center;">
                   ${sel.documento && sel.documento!=='—'
-                    ? `<a style="font-size:12.5px;color:var(--status-info);cursor:pointer;" onclick="App.abrirDocumentoSharePoint('${this.escapeAttr(c.cnpj)}','${this.escapeAttr(sel.documento)}')">📄 ${this.escapeHtml(sel.documento)}</a>`
+                    ? `<a style="font-size:12.5px;color:var(--status-info);cursor:pointer;" data-action="abrirDocumentoSharePoint" data-args='${this.attrJson([c.cnpj, sel.documento])}'>📄 ${this.escapeHtml(sel.documento)}</a>`
                     : `<span class="view-sub" style="font-size:12px;">Documento ainda não gerado para este ato.</span>`}
-                  ${sel.processoId && !this.ehUsuarioCliente() ? `<button class="btn" style="padding:5px 12px;font-size:12px;" onclick="App.navigate('processos')">Ver processo #${sel.processoId}</button>` : ''}
+                  ${sel.processoId && !this.ehUsuarioCliente() ? `<button class="btn" style="padding:5px 12px;font-size:12px;" data-action="navigate" data-args='["processos"]'>Ver processo #${sel.processoId}</button>` : ''}
                 </div>
               </div>
             </div>
@@ -1143,8 +1156,8 @@ const App = {
                   </td>
                   <td style="font-size:11.5px;color:var(--muted);font-family:ui-monospace,monospace;">${this.escapeHtml(doc.pasta)}</td>
                   <td style="text-align:right;white-space:nowrap;">
-                    <button class="btn" style="padding:5px 11px;font-size:11.5px;" onclick="App.baixarDocumento('${this.escapeAttr(nome)}',${i})">⬇ Baixar</button>
-                    <button class="btn" style="padding:5px 11px;font-size:11.5px;" onclick="App.abrirCompartilhar('${this.escapeAttr(nome)}',${i})">🔗 Compartilhar</button>
+                    <button class="btn" style="padding:5px 11px;font-size:11.5px;" data-action="baixarDocumento" data-args='${this.attrJson([nome, i])}'>⬇ Baixar</button>
+                    <button class="btn" style="padding:5px 11px;font-size:11.5px;" data-action="abrirCompartilhar" data-args='${this.attrJson([nome, i])}'>🔗 Compartilhar</button>
                   </td>
                 </tr>`).join('') || '<tr><td colspan="3" style="color:var(--muted);font-size:12.5px;">Nenhum documento societário arquivado para este cliente.</td></tr>'}
             </tbody>
@@ -1173,7 +1186,7 @@ const App = {
                 return `<div class="doc-row">
                   <span class="dt">${this.escapeHtml(doc.tipo)}</span>
                   <span class="df">${doc.arquivo && doc.arquivo!=='—'
-                    ? `<a onclick="App.abrirDocumentoSharePoint('${this.escapeAttr(c.cnpj)}','${this.escapeAttr(doc.arquivo)}')">${this.escapeHtml(doc.arquivo)}</a>`
+                    ? `<a data-action="abrirDocumentoSharePoint" data-args='${this.attrJson([c.cnpj, doc.arquivo])}'>${this.escapeHtml(doc.arquivo)}</a>`
                     : '<span style="color:var(--muted);">não anexado</span>'}</span>
                   <span style="flex:none;font-size:11.5px;color:var(--muted);">${doc.validade!=='—'?'val. '+this.escapeHtml(doc.validade):''}</span>
                   <span class="badge ${dm.cls}" style="flex:none;"><span class="dot"></span>${this.escapeHtml(dm.label)}</span>

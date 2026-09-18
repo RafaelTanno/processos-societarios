@@ -83,7 +83,7 @@ Object.assign(App, {
             <thead><tr><th>Sócio</th><th>CPF</th><th>Empresas</th><th style="text-align:center;">Docs</th></tr></thead>
             <tbody>
               ${lista.map(so=>`
-                <tr class="cli-linha" onclick="App.abrirSocio('${this.escapeAttr(so.chave)}')">
+                <tr class="cli-linha" data-action="abrirSocio" data-args='${this.attrJson([so.chave])}'>
                   <td><div style="font-weight:650;font-size:12.5px;">${this.escapeHtml(so.nome)}</div>
                       <div style="font-size:11px;color:var(--muted);">${this.escapeHtml(so.participacoes[0].cargo)}${so.participacoes.length>1?' · e mais '+(so.participacoes.length-1):''}</div></td>
                   <td style="font-size:12px;font-variant-numeric:tabular-nums;">${this.escapeHtml(so.cpf||'—')}</td>
@@ -100,7 +100,7 @@ Object.assign(App, {
 
     grid.className = 'cli-grid';
     grid.innerHTML = lista.map(so=>`
-      <div class="cli-card" onclick="App.abrirSocio('${this.escapeAttr(so.chave)}')">
+      <div class="cli-card" data-action="abrirSocio" data-args='${this.attrJson([so.chave])}'>
         <div class="cli-nome">${this.escapeHtml(so.nome)}</div>
         <div class="cli-cnpj">${so.cpf ? 'CPF '+this.escapeHtml(so.cpf) : 'CPF não informado no QSA'}</div>
         <div class="cli-meta">
@@ -121,7 +121,7 @@ Object.assign(App, {
     el.style.display='';
     el.innerHTML = `
       <div class="btn-row" style="margin:0 0 14px;justify-content:flex-start;">
-        <button class="btn" onclick="App.fecharSocioDetalhe()">← Voltar para o cadastro de sócios</button>
+        <button class="btn" data-action="fecharSocioDetalhe">← Voltar para o cadastro de sócios</button>
       </div>
 
       <div class="cli-hero">
@@ -148,7 +148,7 @@ Object.assign(App, {
                   <td style="font-size:12px;">${this.escapeHtml(pp.cargo)}</td>
                   <td style="font-size:12px;">${this.escapeHtml(pp.participacao)}</td>
                   <td style="font-size:12px;">${this.escapeHtml(pp.entrada)}</td>
-                  <td style="text-align:right;"><button class="btn" style="padding:5px 11px;font-size:11.5px;" onclick="App.irParaCliente('${this.escapeAttr(pp.empresa)}')">Abrir ficha</button></td>
+                  <td style="text-align:right;"><button class="btn" style="padding:5px 11px;font-size:11.5px;" data-action="irParaCliente" data-args='${this.attrJson([pp.empresa])}'>Abrir ficha</button></td>
                 </tr>`).join('')}
             </tbody>
           </table>
@@ -176,8 +176,8 @@ Object.assign(App, {
                   <td><span class="badge ${dm.cls}"><span class="dot"></span>${this.escapeHtml(dm.label)}</span></td>
                   <td style="text-align:right;white-space:nowrap;">
                     ${temArquivo ? `
-                      <button class="btn" style="padding:5px 11px;font-size:11.5px;" onclick="App.baixarArquivo('${this.escapeAttr(doc.empresa)}','${this.escapeAttr(doc.arquivo)}')">⬇ Baixar</button>
-                      <button class="btn" style="padding:5px 11px;font-size:11.5px;" onclick="App.compartilharArquivo('${this.escapeAttr(doc.empresa)}','${this.escapeAttr(doc.arquivo)}')">🔗 Compartilhar</button>`
+                      <button class="btn" style="padding:5px 11px;font-size:11.5px;" data-action="baixarArquivo" data-args='${this.attrJson([doc.empresa, doc.arquivo])}'>⬇ Baixar</button>
+                      <button class="btn" style="padding:5px 11px;font-size:11.5px;" data-action="compartilharArquivo" data-args='${this.attrJson([doc.empresa, doc.arquivo])}'>🔗 Compartilhar</button>`
                     : '<span style="font-size:11.5px;color:var(--muted);">—</span>'}
                   </td>
                 </tr>`;
@@ -415,8 +415,8 @@ Object.assign(App, {
           <td><span class="badge ${u.status==='Ativo'?'good':'crit'}"><span class="dot"></span>${u.status}</span></td>
           <td style="font-size:12px;color:var(--muted);">${this.escapeHtml(u.ultimoAcesso||'—')}</td>
           <td style="text-align:right;white-space:nowrap;">
-            <button class="btn" style="padding:5px 11px;font-size:11.5px;" onclick="App.openUsuarioClienteModal('${u.id}')">Editar</button>
-            <button class="btn" style="padding:5px 11px;font-size:11.5px;" onclick="App.entrarComoUsuarioCliente('${u.id}')">Ver como</button>
+            <button class="btn" style="padding:5px 11px;font-size:11.5px;" data-action="openUsuarioClienteModal" data-args='${this.attrJson([u.id])}'>Editar</button>
+            <button class="btn" style="padding:5px 11px;font-size:11.5px;" data-action="entrarComoUsuarioCliente" data-args='${this.attrJson([u.id])}'>Ver como</button>
           </td>
         </tr>`).join('')}</tbody>`;
     this.renderLinksTable();
@@ -451,7 +451,7 @@ Object.assign(App, {
     const marcadas = u ? u.empresas : [];
     document.getElementById('ucEmpresas').innerHTML = Object.keys(CLIENTES_DETALHE).map(nome=>`
       <label class="check-item" style="display:flex;cursor:pointer;padding:4px 0;font-size:12.5px;">
-        <input type="checkbox" class="ucEmpresaChk" value="${this.escapeAttr(nome)}" ${marcadas.indexOf(nome)>-1?'checked':''} onchange="App.contarEmpresasUc()">
+        <input type="checkbox" class="ucEmpresaChk" value="${this.escapeAttr(nome)}" ${marcadas.indexOf(nome)>-1?'checked':''} data-action="contarEmpresasUc" data-event="change">
         <span style="margin-left:7px;">${this.escapeHtml(nome)}</span>
       </label>`).join('');
     this.contarEmpresasUc();
@@ -625,11 +625,11 @@ Object.assign(App, {
       if(somenteNova){
         html += `<div class="client-opt bloqueado" title="Indisponível em Abertura de Empresa — esta empresa já existe">${this.escapeHtml(c.nome)}<small>já possui CNPJ e pasta no SharePoint — indisponível para abertura</small></div>`;
       } else {
-        html += `<div class="client-opt ${sel}" onclick="App.pickClient('${this.escapeAttr(c.nome)}')">${this.escapeHtml(c.nome)}<small>Documentos Compartilhados / ${this.escapeHtml(c.nome)} / 03 - Societario${c.minutaPropria ? ' · 📄 minuta própria cadastrada' : ''}${semDoc ? ' · ⚠️ sem Cartão CNPJ/QSA arquivados' : ''}</small></div>`;
+        html += `<div class="client-opt ${sel}" data-action="pickClient" data-args='${this.attrJson([c.nome])}'>${this.escapeHtml(c.nome)}<small>Documentos Compartilhados / ${this.escapeHtml(c.nome)} / 03 - Societario${c.minutaPropria ? ' · 📄 minuta própria cadastrada' : ''}${semDoc ? ' · ⚠️ sem Cartão CNPJ/QSA arquivados' : ''}</small></div>`;
       }
     });
     if(!somenteExistente){
-      html += `<div class="client-opt client-new ${wizard.clienteNovo?'selected':''}" onclick="App.pickClient(null,true)">+ Cadastrar nova empresa (a ferramenta cria a pasta e a estrutura padrão no SharePoint)</div>`;
+      html += `<div class="client-opt client-new ${wizard.clienteNovo?'selected':''}" data-action="pickClient" data-args='${this.attrJson([null, true])}'>+ Cadastrar nova empresa (a ferramenta cria a pasta e a estrutura padrão no SharePoint)</div>`;
     }
     list.innerHTML = html;
     this.renderClientePick();
@@ -665,7 +665,7 @@ Object.assign(App, {
         <div class="cp-nome ${escolhido?'':'pendente'}">${escolhido ? this.escapeHtml(nome) : 'Nenhum cliente selecionado ainda'}</div>
         <small>${this.escapeHtml(detalhe)}</small>
       </div>
-      <button class="btn ${escolhido?'':'primary'}" onclick="App.abrirClienteModal()">${escolhido ? 'Trocar cliente' : 'Selecionar cliente →'}</button>
+      <button class="btn ${escolhido?'':'primary'}" data-action="abrirClienteModal">${escolhido ? 'Trocar cliente' : 'Selecionar cliente →'}</button>
     </div>`;
   },
   abrirClienteModal(){
@@ -769,7 +769,7 @@ Object.assign(App, {
             <b>Pasta criada no SharePoint</b> em ${this.escapeHtml(st.criadaEm)} por ${this.escapeHtml(st.criadaPor)} — ${st.pastas.length} subpastas da estrutura padrão.
             <div style="font-family:ui-monospace,monospace;font-size:11px;margin-top:4px;opacity:.85;">${this.escapeHtml(st.caminho)}/</div>
             <div style="margin-top:7px;">
-              <button class="btn" style="padding:4px 11px;font-size:11px;" onclick="App.verPastasCriadas()">Ver estrutura criada</button>
+              <button class="btn" style="padding:4px 11px;font-size:11px;" data-action="verPastasCriadas">Ver estrutura criada</button>
             </div>
           </span>
         </div>`;
@@ -785,7 +785,7 @@ Object.assign(App, {
             Conectada ao Microsoft 365, a pasta abaixo seria criada neste momento, com ${st.pastas.length} subpastas da estrutura padrão.
             <div style="font-family:ui-monospace,monospace;font-size:11px;margin-top:4px;opacity:.85;">${this.escapeHtml(st.caminho)}/</div>
             <div style="margin-top:7px;">
-              <button class="btn" style="padding:4px 11px;font-size:11px;" onclick="App.verPastasCriadas()">Ver a estrutura que seria criada</button>
+              <button class="btn" style="padding:4px 11px;font-size:11px;" data-action="verPastasCriadas">Ver a estrutura que seria criada</button>
             </div>
           </span>
         </div>`;
@@ -796,7 +796,7 @@ Object.assign(App, {
           <span class="grow">
             <b>Pasta ainda não criada.</b> Ela será criada automaticamente ao enviar o processo — até lá não há onde arquivar os documentos deste cliente.
             <div style="margin-top:7px;">
-              <button class="btn" style="padding:4px 11px;font-size:11px;" onclick="App.responderPastaSharePoint(true)">Criar agora</button>
+              <button class="btn" style="padding:4px 11px;font-size:11px;" data-action="responderPastaSharePoint" data-args='[true]'>Criar agora</button>
             </div>
           </span>
         </div>`;
@@ -883,7 +883,7 @@ Object.assign(App, {
           <div class="field" style="max-width:100%;margin-bottom:12px;">
             <label>Nome da pasta (razão social)</label>
             <input type="text" id="novaPastaNome" placeholder="Digite a razão social — a pasta terá exatamente este nome"
-                   value="${this.escapeHtml(wizard.campos.razaoSocial||'')}" oninput="App.setNomePastaNova(this.value)">
+                   value="${this.escapeHtml(wizard.campos.razaoSocial||'')}" data-action="setNomePastaNova" data-event="input" data-value-from="value">
           </div>
           <div style="padding:11px 13px;border:1px dashed var(--line);border-radius:10px;background:var(--surface);">
             <div style="font-size:12px;color:var(--muted);margin-bottom:6px;font-family:ui-monospace,monospace;">
@@ -897,7 +897,7 @@ Object.assign(App, {
     box.innerHTML = estruturaBox + `
       <div class="callout" style="margin-top:14px;margin-bottom:6px;">
         <label class="check-item" style="cursor:pointer;">
-          <input type="checkbox" id="minutaToggle" ${wizard.minutaPropria?'checked':''} onchange="App.toggleMinuta(this.checked)">
+          <input type="checkbox" id="minutaToggle" ${wizard.minutaPropria?'checked':''} data-action="toggleMinuta" data-event="change" data-value-from="checked">
           Este cliente possui minuta contratual própria (modelo específico) que deve ser usada neste processo
         </label>
       </div>
@@ -918,7 +918,7 @@ Object.assign(App, {
       <div class="dropzone ${wizard.minutaArquivo?'filled':''}" id="dz-minuta" style="text-align:left;min-width:0;">
         ${wizard.minutaArquivo ? '✓ '+wizard.minutaArquivo.name : 'Clique para enviar a minuta própria do cliente (.docx)'}
       </div>
-      <input type="file" id="fi-minuta" accept=".docx,.doc,.pdf" style="display:none" onchange="App.handleMinutaFile(this.files)">
+      <input type="file" id="fi-minuta" accept=".docx,.doc,.pdf" style="display:none" data-action="handleMinutaFile" data-event="change" data-value-from="files">
       <p class="view-sub" style="margin:8px 0 0;font-size:11.5px;">Essa minuta será usada como base do contrato deste cliente no lugar de um modelo padrão — na versão integrada, o backend mescla os dados do processo diretamente nela.</p>`;
     document.getElementById('dz-minuta').onclick = ()=>document.getElementById('fi-minuta').click();
   },
@@ -933,7 +933,7 @@ Object.assign(App, {
     const grid = document.getElementById('tipoGrid');
     grid.innerHTML = Object.keys(TIPOS).map(key=>{
       const t = TIPOS[key]; const sel = wizard.tipo===key ? 'selected' : '';
-      return `<div class="tipo-card ${sel}" onclick="App.pickTipo('${key}')"><div class="ic">${t.ic}</div><h4>${t.label}</h4><p>${t.desc}</p></div>`;
+      return `<div class="tipo-card ${sel}" data-action="pickTipo" data-args='${this.attrJson([key])}'><div class="ic">${t.ic}</div><h4>${t.label}</h4><p>${t.desc}</p></div>`;
     }).join('');
   },
   pickTipo(key){
@@ -1075,7 +1075,7 @@ Object.assign(App, {
     return `
       <section class="caixa ${aberta?'aberta':'fechada'} ${e.salva?'salva':''} ${opts.classe||''}"
                id="caixa-${id}" ${opts.flag?`data-flag="${this.escapeAttr(opts.flag)}"`:''}>
-        <header class="caixa-head" onclick="App.toggleCaixa('${id}')">
+        <header class="caixa-head" data-action="toggleCaixa" data-args='${this.attrJson([id])}'>
           <span class="caixa-seta">${aberta?'▾':'▸'}</span>
           <span class="caixa-titulo">${titulo}</span>
           ${selo}
@@ -1088,7 +1088,7 @@ Object.assign(App, {
           ${corpo}
           <div class="caixa-foot">
             <div class="caixa-foot-extra">${opts.acoes || ''}</div>
-            <button type="button" class="btn primary caixa-salvar" onclick="event.stopPropagation(); App.salvarCaixa('${id}')">
+            <button type="button" class="btn primary caixa-salvar" data-action="salvarCaixa" data-args='${this.attrJson([id])}'>
               ${e.salva ? 'Salvar e recolher' : '✓ Salvar'}
             </button>
           </div>

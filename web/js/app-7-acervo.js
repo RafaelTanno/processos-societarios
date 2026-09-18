@@ -129,9 +129,9 @@ Object.assign(App, {
         <div class="panel-body">
           ${ultima ? `<p class="view-sub" style="margin:0 0 12px;">Última varredura gravada: <b>${this.escapeHtml(new Date(ultima).toLocaleString('pt-BR'))}</b>.</p>` : ''}
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button class="btn primary" onclick="App.varrerAcervo('todos')" ${a.rodando?'disabled':''}>Varrer todos os clientes</button>
-            <button class="btn" onclick="App.varrerAcervo('faltantes')" ${a.rodando?'disabled':''}>Varrer só os que faltam</button>
-            ${a.rodando ? `<button class="btn danger" onclick="App.pararVarredura()">Parar</button>` : ''}
+            <button class="btn primary" data-action="varrerAcervo" data-args='["todos"]' ${a.rodando?'disabled':''}>Varrer todos os clientes</button>
+            <button class="btn" data-action="varrerAcervo" data-args='["faltantes"]' ${a.rodando?'disabled':''}>Varrer só os que faltam</button>
+            ${a.rodando ? `<button class="btn danger" data-action="pararVarredura">Parar</button>` : ''}
           </div>
           <div id="acervoProgresso" style="margin-top:14px;"></div>
         </div>
@@ -290,13 +290,20 @@ Object.assign(App, {
             </table>
           </div>
           <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
-            <button class="btn primary" onclick="App.gravarAcervo()" ${this.acervo.rodando?'disabled':''}>Gravar no banco (${rs.filter(r=>r.ok && r.ficha && !r.ficha.falha).length})</button>
-            <button class="btn" onclick="App.acervo.resultados=[];App.renderAcervo();">Descartar</button>
+            <button class="btn primary" data-action="gravarAcervo" ${this.acervo.rodando?'disabled':''}>Gravar no banco (${rs.filter(r=>r.ok && r.ficha && !r.ficha.falha).length})</button>
+            <button class="btn" data-action="descartarResultadosAcervo">Descartar</button>
           </div>
         </div>
       </div>`;
   },
 
+  /* Vivia como onclick="App.acervo.resultados=[];App.renderAcervo();" no
+     template — a CSP sem 'unsafe-inline' não deixa mais compor mais de uma
+     instrução dentro do atributo. */
+  descartarResultadosAcervo(){
+    this.acervo.resultados = [];
+    this.renderAcervo();
+  },
   async gravarAcervo(){
     /* Só grava o que foi realmente lido. Cliente cuja leitura falhou não
        entra no banco — gravar "sem acervo" ali seria registrar como fato

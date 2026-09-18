@@ -34,9 +34,9 @@ enxerga aqui, e a autoria do arquivo fica com o nome de quem arquivou.
 |---|---|
 | `web/index.html` | A marcação da ferramenta. O código está em `web/js/` e `web/dados/`. |
 | `web/config.js` | **O único arquivo que muda entre ambientes** no lado do navegador: tenantId, clientId, site do SharePoint, quem é administrador. |
-| `web/auth.html` | Página em branco para onde a janela de login Microsoft volta. Precisa existir e continuar vazia. |
 | `web/js/acervo.js` | Lê o acervo societário do SharePoint: interpreta os nomes de arquivo e extrai o Cartão CNPJ e o QSA. Não conhece tela. |
 | `web/js/app-7-acervo.js` | A tela da varredura do acervo e a ligação dela com o Painel de Clientes. |
+| `web/js/eventos.js` | Delegação de evento (clique, change, input...) para os elementos com `data-action` — é o que substitui os antigos `onclick`/`onchange` inline, que a CSP abaixo não permite mais. |
 | `web/vendor/msal-browser.min.js` | Biblioteca de autenticação da Microsoft (MSAL v5), servida junto com a página. |
 | `web/staticwebapp.config.json` | Rotas e cabeçalhos de segurança, incluindo a **CSP**. É ele que faz `/login` funcionar e que deixa `/api` passar. |
 | `servidor-local.js` | Sobe ferramenta **e** API na sua máquina, para testar antes de publicar. |
@@ -98,8 +98,8 @@ publique**.
 1. **Nome:** `GS2 — Processos Societários`
 2. **Contas suportadas:** apenas contas neste diretório organizacional.
 3. **URI de Redirecionamento:** plataforma **Aplicativo de página única (SPA)**, e cadastre **as duas**:
-   - `https://app.gs2negocios.com.br/auth.html`
-   - `http://localhost:5173/auth.html`
+   - `https://app.gs2negocios.com.br/login`
+   - `http://localhost:5173/login`
 4. Em **Visão geral**, copie o **ID do aplicativo (cliente)** e o **ID do diretório (locatário)**.
 5. **Permissões de API → Microsoft Graph → Delegadas:** `User.Read` e `Sites.ReadWrite.All`.
    Depois clique em **Conceder consentimento do administrador**.
@@ -243,7 +243,7 @@ sintoma é uma tela que simplesmente não carrega o dado, sem erro visível.
 1. Static Web App → **Domínios personalizados → Adicionar** → `app.gs2negocios.com.br`.
 2. No DNS de `gs2negocios.com.br`, crie o **CNAME** que o Azure indicar.
 3. O certificado HTTPS sai automático.
-4. Confirme que `https://app.gs2negocios.com.br/auth.html` está nas URIs de
+4. Confirme que `https://app.gs2negocios.com.br/login` está nas URIs de
    redirecionamento do Entra ID.
 
 ## Passo 6 — Primeira entrada

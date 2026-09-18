@@ -31,27 +31,25 @@
     <p class="sub">Acesso restrito · GS2 Negócios</p>
 
     <div class="login-tabs">
-      <button class="login-tab ativa" id="abaGS2" onclick="App.abaLogin('gs2')">Usuário GS2</button>
-      <button class="login-tab" id="abaCliente" onclick="App.abaLogin('cliente')">Cliente</button>
+      <button class="login-tab ativa" id="abaGS2" data-action="abaLogin" data-args='["gs2"]'>Usuário GS2</button>
+      <button class="login-tab" id="abaCliente" data-action="abaLogin" data-args='["cliente"]'>Cliente</button>
     </div>
 
     <div class="login-pane" id="paneGS2">
       <div class="field">
         <label for="loginEmailGS2">E-mail corporativo</label>
-        <input type="email" id="loginEmailGS2" placeholder="nome@gs2negocios.com.br" autocomplete="username"
-               onkeydown="if(event.key==='Enter')App.entrarGS2()">
+        <input type="email" id="loginEmailGS2" placeholder="nome@gs2negocios.com.br" autocomplete="username">
       </div>
-     <button class="btn-entrar" id="btnEntrarGS2" type="button" onclick="App.entrarGS2()">Entrar</button>
+     <button class="btn-entrar" id="btnEntrarGS2" type="button" data-action="entrarGS2">Entrar</button>
       <p class="login-hint">É a mesma conta do e-mail e do SharePoint da GS2 — não existe senha separada nesta ferramenta.</p>
     </div>
 
     <div class="login-pane" id="paneCliente" hidden>
       <div class="field">
         <label for="loginEmailCliente">E-mail cadastrado</label>
-        <input type="email" id="loginEmailCliente" placeholder="seu.email@empresa.com.br" autocomplete="username"
-               onkeydown="if(event.key==='Enter')App.entrarCliente()">
+        <input type="email" id="loginEmailCliente" placeholder="seu.email@empresa.com.br" autocomplete="username">
       </div>
-      <button class="btn-entrar" id="btnEntrarCliente" onclick="App.entrarCliente()">Entrar</button>
+      <button class="btn-entrar" id="btnEntrarCliente" data-action="entrarCliente">Entrar</button>
       <p class="login-hint">Acesso aos documentos societários das empresas liberadas para você pela GS2.</p>
     </div>
 
@@ -69,42 +67,42 @@
       <div class="crumb" id="crumbTopo">Área do Colaborador &nbsp;/&nbsp; <b>Processos Societários</b></div>
     </div>
     <div class="right">
-      <div class="selo-ambiente demo" id="seloAmbiente" onclick="App.abrirDiagnostico()"><span class="dot"></span>Modo demonstração</div>
+      <div class="selo-ambiente demo" id="seloAmbiente" data-action="abrirDiagnostico"><span class="dot"></span>Modo demonstração</div>
       <div class="icon-btn2">🔔</div>
       <div class="icon-btn2">❓</div>
       <div class="user-chip">
         <div class="avatar2">V</div>
         <div><div class="name">Vinícius</div><div class="role">Colaborador GS2</div></div>
       </div>
-      <button class="btn-logout" onclick="App.logout()">Sair</button>
+      <button class="btn-logout" data-action="logout">Sair</button>
     </div>
   </header>
 
   <div class="app-shell">
     <div class="sidebar">
       <div class="group-label">Ferramenta</div>
-      <div class="nav-item active" data-view="painel" onclick="App.navigate('painel')"><span class="ic">📊</span> Painel</div>
-      <div class="nav-item" data-view="clientes" onclick="App.navigate('clientes')"><span class="ic">🏛️</span> Painel de Clientes</div>
-      <div class="nav-item nav-sub" data-view="socios" onclick="App.navigate('socios')"><span class="ic">👤</span> Cadastro de Sócios</div>
-      <div class="nav-item" data-view="novo" onclick="App.navigate('novo')"><span class="ic">➕</span> Novo Processo</div>
-      <div class="nav-item" data-view="processos" onclick="App.navigate('processos')"><span class="ic">📋</span> Meus Processos</div>
+      <div class="nav-item active" data-view="painel" data-action="navigate" data-args='["painel"]'><span class="ic">📊</span> Painel</div>
+      <div class="nav-item" data-view="clientes" data-action="navigate" data-args='["clientes"]'><span class="ic">🏛️</span> Painel de Clientes</div>
+      <div class="nav-item nav-sub" data-view="socios" data-action="navigate" data-args='["socios"]'><span class="ic">👤</span> Cadastro de Sócios</div>
+      <div class="nav-item" data-view="novo" data-action="navigate" data-args='["novo"]'><span class="ic">➕</span> Novo Processo</div>
+      <div class="nav-item" data-view="processos" data-action="navigate" data-args='["processos"]'><span class="ic">📋</span> Meus Processos</div>
       <div class="group-label">Tipos de processo</div>
-      <div class="nav-item" onclick="App.navigate('novo','abertura')"><span class="ic">🏢</span> Abertura de Empresa</div>
-      <div class="nav-item" onclick="App.navigate('novo','alteracao')"><span class="ic">🔄</span> Alteração Societária</div>
-      <div class="nav-item" onclick="App.navigate('novo','filial')"><span class="ic">🏬</span> Abertura de Filial</div>
-      <div class="nav-item" onclick="App.navigate('novo','baixa')"><span class="ic">🔻</span> Baixa de Empresa</div>
-      <div class="nav-item" onclick="App.navigate('novo','outros')"><span class="ic">📁</span> Outros Eventos</div>
+      <div class="nav-item" data-action="navigate" data-args='["novo","abertura"]'><span class="ic">🏢</span> Abertura de Empresa</div>
+      <div class="nav-item" data-action="navigate" data-args='["novo","alteracao"]'><span class="ic">🔄</span> Alteração Societária</div>
+      <div class="nav-item" data-action="navigate" data-args='["novo","filial"]'><span class="ic">🏬</span> Abertura de Filial</div>
+      <div class="nav-item" data-action="navigate" data-args='["novo","baixa"]'><span class="ic">🔻</span> Baixa de Empresa</div>
+      <div class="nav-item" data-action="navigate" data-args='["novo","outros"]'><span class="ic">📁</span> Outros Eventos</div>
       <div class="group-label">Configurações</div>
-      <div class="nav-item" data-view="templates" onclick="App.navigate('templates')"><span class="ic">📄</span> Modelos de Contrato</div>
+      <div class="nav-item" data-view="templates" data-action="navigate" data-args='["templates"]'><span class="ic">📄</span> Modelos de Contrato</div>
 
       <div id="adminNavGroup" style="display:none;">
         <div class="group-label">Administração</div>
-        <div class="nav-item" data-view="admin-tabelas" onclick="App.navigate('admin-tabelas')"><span class="ic">🔄</span> Atualização de Tabelas</div>
-        <div class="nav-item" data-view="admin-usuarios" onclick="App.navigate('admin-usuarios')"><span class="ic">👥</span> Usuários</div>
-        <div class="nav-item" data-view="admin-requerentes" onclick="App.navigate('admin-requerentes')"><span class="ic">🪪</span> Requerentes</div>
-        <div class="nav-item" data-view="admin-usuarios-cliente" onclick="App.navigate('admin-usuarios-cliente')"><span class="ic">🔑</span> Usuários de Clientes</div>
-        <div class="nav-item" data-view="admin-importar" onclick="App.navigate('admin-importar')"><span class="ic">📥</span> Importar processos</div>
-        <div class="nav-item" data-view="admin-acervo" onclick="App.navigate('admin-acervo')"><span class="ic">🗂️</span> Acervo do SharePoint</div>
+        <div class="nav-item" data-view="admin-tabelas" data-action="navigate" data-args='["admin-tabelas"]'><span class="ic">🔄</span> Atualização de Tabelas</div>
+        <div class="nav-item" data-view="admin-usuarios" data-action="navigate" data-args='["admin-usuarios"]'><span class="ic">👥</span> Usuários</div>
+        <div class="nav-item" data-view="admin-requerentes" data-action="navigate" data-args='["admin-requerentes"]'><span class="ic">🪪</span> Requerentes</div>
+        <div class="nav-item" data-view="admin-usuarios-cliente" data-action="navigate" data-args='["admin-usuarios-cliente"]'><span class="ic">🔑</span> Usuários de Clientes</div>
+        <div class="nav-item" data-view="admin-importar" data-action="navigate" data-args='["admin-importar"]'><span class="ic">📥</span> Importar processos</div>
+        <div class="nav-item" data-view="admin-acervo" data-action="navigate" data-args='["admin-acervo"]'><span class="ic">🗂️</span> Acervo do SharePoint</div>
       </div>
 
       <div class="sidebar-note">
@@ -122,7 +120,7 @@
         <div id="bannerSemente"></div>
         <div class="kpi-row" id="kpiRow"></div>
         <div class="panel">
-          <div class="panel-head"><h3>Processos recentes</h3><button class="btn ghost" onclick="App.navigate('processos')">Ver todos →</button></div>
+          <div class="panel-head"><h3>Processos recentes</h3><button class="btn ghost" data-action="navigate" data-args='["processos"]'>Ver todos →</button></div>
           <div class="panel-body"><table class="tbl" id="dashTable"></table></div>
         </div>
       </div>
@@ -131,8 +129,8 @@
       <div class="view" id="view-novo">
         <h2 class="view-title">Novo Processo Societário</h2>
         <p class="view-sub">Preencha os dados, anexe os documentos e gere o contrato automaticamente a partir do modelo. O preenchimento é guardado sozinho neste navegador — se a internet cair ou a aba fechar, dá para retomar de onde parou.
-          <a onclick="document.getElementById('fiRascunho').click()" style="cursor:pointer;color:var(--green-dark);font-weight:600;">Abrir rascunho de um arquivo</a>.
-          <input type="file" id="fiRascunho" accept=".json" style="display:none" onchange="App.abrirRascunhoArquivo(this.files)"></p>
+          <a data-action="click-target" data-target="fiRascunho" style="cursor:pointer;color:var(--green-dark);font-weight:600;">Abrir rascunho de um arquivo</a>.
+          <input type="file" id="fiRascunho" accept=".json" style="display:none"></p>
         <div class="aviso-rascunho" id="avisoRascunho" style="display:none;"></div>
         <div class="stepper" id="stepper"></div>
         <div class="panel"><div class="panel-body" style="padding-top:18px;">
@@ -173,12 +171,12 @@
               <div class="panel-body" style="padding-top:14px;">
                 <div class="field" style="max-width:420px;margin-bottom:14px;">
                   <label>Modelo de contrato</label>
-                  <select id="tplSelect" onchange="App.renderContractPreview()"></select>
+                  <select id="tplSelect"></select>
                 </div>
                 <div class="contract-preview" id="contractPreview"></div>
                 <div class="btn-row" style="margin-top:16px;">
                   <span></span>
-                  <button class="btn dark" onclick="App.gerarContrato()">Gerar e salvar no SharePoint (simulado) →</button>
+                  <button class="btn dark" data-action="gerarContrato">Gerar e salvar no SharePoint (simulado) →</button>
                 </div>
               </div>
             </div>
@@ -190,11 +188,11 @@
             <div class="form-grid" style="margin-bottom:18px;">
               <div class="field">
                 <label>Requerente da Viabilidade (login gov.br)</label>
-                <select id="juntaRequerente" onchange="App.setJuntaRequerente(this.value)"></select>
+                <select id="juntaRequerente"></select>
               </div>
               <div class="field">
                 <label>Número do protocolo (JUCEMAT)</label>
-                <input type="text" id="juntaProtocolo" placeholder="Ex.: MTP0000000000" oninput="App.setJuntaProtocolo(this.value)">
+                <input type="text" id="juntaProtocolo" placeholder="Ex.: MTP0000000000">
               </div>
             </div>
             <div id="prepJuntaBox"></div>
@@ -209,7 +207,7 @@
             <p class="view-sub" style="margin-bottom:14px;">Acompanhe o processamento da DBE (Documento Básico de Entrada) junto à Receita Federal e anexe a DBE deferida assim que aprovada.</p>
             <div class="field" style="max-width:360px;margin-bottom:18px;">
               <label>Status de acompanhamento da DBE</label>
-              <select id="rfbDbeStatus" onchange="App.setRfbDbeStatus(this.value)">
+              <select id="rfbDbeStatus">
                 <option value="pendente">Pendente</option>
                 <option value="andamento">Em andamento</option>
                 <option value="concluido">Concluído</option>
@@ -219,8 +217,8 @@
               <div class="doc-row">
                 <div class="doc-info"><div class="name">DBE deferida</div></div>
                 <div>
-                  <div class="dropzone" id="dz-dbeDeferida" onclick="document.getElementById('fi-dbeDeferida').click()">Arrastar arquivo ou clicar para selecionar</div>
-                  <input type="file" id="fi-dbeDeferida" style="display:none" onchange="App.handleDbeDeferidaFile(this.files)">
+                  <div class="dropzone" id="dz-dbeDeferida" data-action="click-target" data-target="fi-dbeDeferida">Arrastar arquivo ou clicar para selecionar</div>
+                  <input type="file" id="fi-dbeDeferida" style="display:none">
                 </div>
               </div>
             </div>
@@ -233,12 +231,12 @@
           </div>
 
           <div class="btn-row" style="align-items:center;">
-            <button class="btn" id="btnBack" onclick="App.prevStep()">← Voltar</button>
+            <button class="btn" id="btnBack" data-action="prevStep">← Voltar</button>
             <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end;">
               <span id="rascunhoStatus" class="rascunho-status"></span>
-              <button class="btn" id="btnSalvarRascunho" onclick="App.salvarRascunho(true)">💾 Salvar rascunho</button>
-              <button class="btn ghost" id="btnBaixarRascunho" onclick="App.baixarRascunho()" title="Baixa um arquivo .json com tudo o que já foi preenchido, para retomar em outro computador">⬇ Baixar cópia</button>
-              <button class="btn primary" id="btnNext" onclick="App.nextStep()">Avançar →</button>
+              <button class="btn" id="btnSalvarRascunho" data-action="salvarRascunho" data-args='[true]'>💾 Salvar rascunho</button>
+              <button class="btn ghost" id="btnBaixarRascunho" data-action="baixarRascunho" title="Baixa um arquivo .json com tudo o que já foi preenchido, para retomar em outro computador">⬇ Baixar cópia</button>
+              <button class="btn primary" id="btnNext" data-action="nextStep">Avançar →</button>
             </div>
           </div>
         </div></div>
@@ -249,21 +247,21 @@
         <h2 class="view-title">Meus Processos</h2>
         <p class="view-sub">Acompanhamento de todos os processos societários em andamento e concluídos.</p>
         <div class="filters-row">
-          <select id="filterTipo" onchange="App.renderProcessosTable()">
+          <select id="filterTipo">
             <option value="">Todos os tipos</option>
             <option value="abertura">Abertura de Empresa</option>
             <option value="alteracao">Alteração Societária</option>
             <option value="baixa">Baixa de Empresa</option>
             <option value="outros">Outros Eventos</option>
           </select>
-          <select id="filterStatus" onchange="App.renderProcessosTable()">
+          <select id="filterStatus">
             <option value="">Todos os status</option>
             <option value="analise">Em análise</option>
             <option value="documentos">Aguardando documentos</option>
             <option value="andamento">Em andamento</option>
             <option value="concluido">Concluído</option>
           </select>
-          <input type="text" id="filterBusca" placeholder="Buscar por cliente..." oninput="App.aoParar('processos', ()=>App.renderProcessosTable())">
+          <input type="text" id="filterBusca" placeholder="Buscar por cliente...">
         </div>
         <div class="panel"><div class="panel-body"><table class="tbl" id="processosTable"></table></div></div>
       </div>
@@ -277,15 +275,15 @@
                removida da tela a pedido do usuário. O mapeamento continua documentado no
                comentário do CLIENTES_DETALHE e no doc do projeto. -->
           <div class="filters-row">
-            <input type="text" id="cliBusca" placeholder="Buscar por razão social ou CNPJ..." oninput="App.aoParar('clientes', ()=>App.renderClientesGrid())">
-            <select id="cliFiltroSit" onchange="App.renderClientesGrid()">
+            <input type="text" id="cliBusca" placeholder="Buscar por razão social ou CNPJ...">
+            <select id="cliFiltroSit">
               <option value="">Todas as situações</option>
               <option value="ATIVA">Ativa</option>
               <option value="BAIXADA">Baixada</option>
             </select>
             <div class="view-toggle" id="cliViewToggle">
-              <button type="button" class="active" data-modo="cards" onclick="App.setModoVisualizacao('cards')">▦ Cartões</button>
-              <button type="button" data-modo="lista" onclick="App.setModoVisualizacao('lista')">☰ Lista</button>
+              <button type="button" class="active" data-modo="cards" data-action="setModoVisualizacao" data-args='["cards"]'>▦ Cartões</button>
+              <button type="button" data-modo="lista" data-action="setModoVisualizacao" data-args='["lista"]'>☰ Lista</button>
             </div>
           </div>
           <div class="cli-grid" id="clientesGrid"></div>
@@ -311,15 +309,15 @@
           <h2 class="view-title">Cadastro de Sócios</h2>
           <p class="view-sub">Todas as pessoas que constam no quadro societário dos clientes, consolidadas a partir das fichas do Painel de Clientes. Um mesmo sócio aparece uma única vez, com todas as empresas em que participa.</p>
           <div class="filters-row">
-            <input type="text" id="socioBusca" placeholder="Buscar por nome, CPF ou empresa..." oninput="App.aoParar('socios', ()=>App.renderSociosCadastro())">
-            <select id="socioFiltroDoc" onchange="App.renderSociosCadastro()">
+            <input type="text" id="socioBusca" placeholder="Buscar por nome, CPF ou empresa...">
+            <select id="socioFiltroDoc">
               <option value="">Todos os sócios</option>
               <option value="pendente">Só com documento pendente</option>
               <option value="multi">Só em mais de uma empresa</option>
             </select>
             <div class="view-toggle" id="socioViewToggle">
-              <button type="button" class="active" data-modo="cards" onclick="App.setModoSocios('cards')">▦ Cartões</button>
-              <button type="button" data-modo="lista" onclick="App.setModoSocios('lista')">☰ Lista</button>
+              <button type="button" class="active" data-modo="cards" data-action="setModoSocios" data-args='["cards"]'>▦ Cartões</button>
+              <button type="button" data-modo="lista" data-action="setModoSocios" data-args='["lista"]'>☰ Lista</button>
             </div>
           </div>
           <div id="sociosGrid"></div>
@@ -349,7 +347,7 @@
         </div>
         <div class="btn-row" style="margin-top:0;justify-content:flex-end;">
           <span></span>
-          <button class="btn primary" onclick="App.openUsuarioClienteModal()">+ Cadastrar usuário de cliente</button>
+          <button class="btn primary" data-action="openUsuarioClienteModal">+ Cadastrar usuário de cliente</button>
         </div>
         <div class="panel" style="margin-top:16px;"><div class="panel-body"><table class="tbl" id="usuariosClienteTable"></table></div></div>
 
@@ -374,7 +372,7 @@
         </div>
         <div class="btn-row" style="margin-top:0;justify-content:flex-end;">
           <span></span>
-          <button class="btn primary" onclick="App.openTplModal()">+ Adicionar Modelo</button>
+          <button class="btn primary" data-action="openTplModal">+ Adicionar Modelo</button>
         </div>
         <div class="tpl-grid" id="tplGrid" style="margin-top:16px;"></div>
       </div>
@@ -388,7 +386,7 @@
         </div>
         <div class="btn-row" style="margin-top:0;justify-content:flex-end;">
           <span></span>
-          <button class="btn dark" onclick="App.forcarAtualizacaoTodas()">🔄 Forçar atualização de todas</button>
+          <button class="btn dark" data-action="forcarAtualizacaoTodas">🔄 Forçar atualização de todas</button>
         </div>
         <div class="panel" style="margin-top:14px;">
           <div class="panel-head"><h3>Tabelas de referência</h3></div>
@@ -409,7 +407,7 @@
         </div>
         <div class="btn-row" style="margin-top:0;justify-content:flex-end;">
           <span></span>
-          <button class="btn primary" onclick="App.openUsuarioModal()">+ Novo Usuário</button>
+          <button class="btn primary" data-action="openUsuarioModal">+ Novo Usuário</button>
         </div>
         <div class="panel" style="margin-top:14px;">
           <div class="panel-body"><table class="tbl" id="usuariosTable"></table></div>
@@ -425,7 +423,7 @@
         </div>
         <div class="btn-row" style="margin-top:0;justify-content:flex-end;">
           <span></span>
-          <button class="btn primary" onclick="App.openRequerenteModal()">+ Novo Requerente</button>
+          <button class="btn primary" data-action="openRequerenteModal">+ Novo Requerente</button>
         </div>
         <div class="panel" style="margin-top:14px;">
           <div class="panel-body"><table class="tbl" id="requerentesTable"></table></div>
@@ -451,15 +449,15 @@
     <div style="max-height:230px;overflow:auto;padding:11px 13px;border:1px dashed var(--line);border-radius:10px;background:#fff;margin-bottom:18px;" id="pastaConfirmArvore"></div>
 
     <div class="btn-row" style="margin:0;">
-      <button class="btn" onclick="App.responderPastaSharePoint(false)">Não, criar depois</button>
-      <button class="btn primary" onclick="App.responderPastaSharePoint(true)">Sim, criar a pasta agora</button>
+      <button class="btn" data-action="responderPastaSharePoint" data-args='[false]'>Não, criar depois</button>
+      <button class="btn primary" data-action="responderPastaSharePoint" data-args='[true]'>Sim, criar a pasta agora</button>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay" id="usuarioClienteModal">
   <div class="modal-box">
-    <button class="modal-close" onclick="App.closeUsuarioClienteModal()">✕</button>
+    <button class="modal-close" data-action="closeUsuarioClienteModal">✕</button>
     <h3 id="usuarioClienteModalTitle">Cadastrar usuário de cliente</h3>
     <p class="view-sub" style="margin:-6px 0 14px;">O acesso fica restrito ao Painel de Clientes e às empresas marcadas abaixo.</p>
     <div class="form-grid" style="margin-bottom:12px;">
@@ -475,13 +473,13 @@
       <p class="view-sub" style="margin:2px 0 8px;font-size:11.5px;">O usuário só verá estas empresas. Marque apenas as que ele realmente precisa acessar.</p>
       <div id="ucEmpresas" style="max-height:230px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:10px 12px;"></div>
     </div>
-    <div class="btn-row"><span></span><button class="btn primary" onclick="App.saveUsuarioCliente()">Salvar usuário</button></div>
+    <div class="btn-row"><span></span><button class="btn primary" data-action="saveUsuarioCliente">Salvar usuário</button></div>
   </div>
 </div>
 
 <div class="modal-overlay" id="compartilharModal">
   <div class="modal-box">
-    <button class="modal-close" onclick="App.fecharCompartilhar()">&#10005;</button>
+    <button class="modal-close" data-action="fecharCompartilhar">&#10005;</button>
     <h3>Compartilhar documento societário</h3>
     <p class="view-sub" style="margin:-6px 0 14px;">Gera um link de acesso somente leitura, com prazo de validade. O destinatário não precisa de conta no SharePoint.</p>
 
@@ -507,7 +505,7 @@
     </div>
 
     <div class="btn-row" style="margin:0 0 14px;"><span></span>
-      <button class="btn primary" onclick="App.gerarLinkCompartilhamento()">Gerar link</button>
+      <button class="btn primary" data-action="gerarLinkCompartilhamento">Gerar link</button>
     </div>
 
     <div id="compartilharLinkBox" style="display:none;">
@@ -517,7 +515,7 @@
       </div>
       <div id="linkResumo" style="font-size:11.5px;color:var(--muted);margin-bottom:14px;"></div>
       <div class="btn-row" style="margin:0;justify-content:flex-start;">
-        <button class="btn" id="btnCopiar" onclick="App.copiarLink()">Copiar link</button>
+        <button class="btn" id="btnCopiar" data-action="copiarLink">Copiar link</button>
         <button class="btn primary" id="btnWhats">Enviar por WhatsApp</button>
       </div>
       <p class="view-sub" style="margin:14px 0 0;font-size:11.5px;">Fase 1: link simulado. Na versao integrada e um sharing link real da Microsoft Graph (<code>/createLink</code>), com a mesma validade e escopo escolhidos aqui, e cada abertura fica registrada no log do SharePoint.</p>
@@ -531,7 +529,7 @@
 <!-- ===== Modal: mapa de campos da Viabilidade (ferramenta → portal) ===== -->
 <div class="modal-overlay" id="mapaViabModal">
   <div class="modal-box" style="max-width:680px;">
-    <button class="modal-close" onclick="App.fecharMapaViabilidade()">✕</button>
+    <button class="modal-close" data-action="fecharMapaViabilidade">✕</button>
     <h3>Mapa dos campos da Viabilidade</h3>
     <p class="view-sub" style="margin-top:-8px;">De onde sai cada informação que o portal pede, tela a tela, com as armadilhas observadas no primeiro protocolo real. É este mapa que a automação da Fase 2 vai seguir.</p>
     <div id="mapaViabConteudo" style="margin-top:14px;"></div>
@@ -541,30 +539,30 @@
 <!-- ===== Modal: diagnóstico da integração (Entra ID + SharePoint) ===== -->
 <div class="modal-overlay" id="diagModal">
   <div class="modal-box" style="max-width:640px;">
-    <button class="modal-close" onclick="App.fecharDiagnostico()">✕</button>
+    <button class="modal-close" data-action="fecharDiagnostico">✕</button>
     <h3>Diagnóstico da integração</h3>
     <p class="view-sub" style="margin-top:-8px;">Roda as mesmas chamadas reais que a ferramenta usa no dia a dia (Microsoft Entra ID + Microsoft Graph/SharePoint) e mostra o que cada uma respondeu. Serve para validar o ambiente <b>antes de publicar</b>.</p>
     <div id="diagResultado" style="margin:14px 0;"></div>
     <div class="btn-row" style="gap:8px;flex-wrap:wrap;">
-      <button class="btn" onclick="App.rodarDiagnostico(false)">↻ Repetir testes de leitura</button>
-      <button class="btn dark" onclick="if(confirm('Este teste CRIA de verdade uma pasta e um arquivo no SharePoint da GS2 (pasta \u0022'+GS2_CONFIG.sharepoint.pastaTestes+'\u0022). Continuar?')) App.rodarDiagnostico(true)">Executar teste de gravação</button>
+      <button class="btn" data-action="rodarDiagnostico" data-args='[false]'>↻ Repetir testes de leitura</button>
+      <button class="btn dark" data-action="confirmarGravacaoDiagnostico">Executar teste de gravação</button>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay" id="clienteModal">
   <div class="modal-box" style="max-width:560px;">
-    <button class="modal-close" onclick="App.fecharClienteModal()">✕</button>
+    <button class="modal-close" data-action="fecharClienteModal">✕</button>
     <h3>Selecionar cliente</h3>
-    <div class="client-search"><input type="text" id="clientSearch" placeholder="Buscar empresa por nome..." oninput="App.aoParar('wizard', ()=>App.filterClients())"></div>
+    <div class="client-search"><input type="text" id="clientSearch" placeholder="Buscar empresa por nome..."></div>
     <div class="client-list" id="clientList"></div>
-    <div class="btn-row" style="margin-top:16px;"><span></span><button class="btn" onclick="App.fecharClienteModal()">Fechar</button></div>
+    <div class="btn-row" style="margin-top:16px;"><span></span><button class="btn" data-action="fecharClienteModal">Fechar</button></div>
   </div>
 </div>
 
 <div class="modal-overlay" id="tplModal">
   <div class="modal-box">
-    <button class="modal-close" onclick="App.closeTplModal()">✕</button>
+    <button class="modal-close" data-action="closeTplModal">✕</button>
     <h3>Novo modelo de contrato</h3>
     <div class="field" style="margin-bottom:12px;"><label>Nome do modelo</label><input type="text" id="tplNome" placeholder="Ex.: Contrato Social Padrão - LTDA"></div>
     <div class="field" style="margin-bottom:12px;"><label>Aplicável ao tipo de processo</label>
@@ -581,28 +579,28 @@
       <input type="file" id="tplFileInput" accept=".docx,.doc" style="display:none">
     </div>
     <div id="tplDetected"></div>
-    <div class="btn-row"><span></span><button class="btn primary" onclick="App.saveTemplate()">Salvar modelo</button></div>
+    <div class="btn-row"><span></span><button class="btn primary" data-action="saveTemplate">Salvar modelo</button></div>
   </div>
 </div>
 
 <!-- ===== Modal: acompanhamento Junta Comercial (JUCEMAT) ===== -->
 <div class="modal-overlay" id="jucematModal">
   <div class="modal-box" style="max-width:640px;">
-    <button class="modal-close" onclick="App.closeJucematModal()">✕</button>
+    <button class="modal-close" data-action="closeJucematModal">✕</button>
     <h3 id="jucematModalTitle">Acompanhamento — Junta Comercial</h3>
     <p class="view-sub" style="margin-top:-8px;">Fluxo baseado nos manuais da JUCEMAT (Portal de Serviços / REDESIM) para o estado de Mato Grosso. <b>Fase 1 do projeto:</b> este acompanhamento é atualizado manualmente pelo colaborador. A automação da submissão/assinatura no portal é uma <b>Fase 2 planejada</b>, ainda não iniciada.</p>
     <div id="jucematSteps"></div>
     <div class="field" style="margin:14px 0;"><label>Número do protocolo (ex.: MTP...)</label><input type="text" id="jucematProtocolo" placeholder="MTP0000000000"></div>
     <div id="jucematIndeferimentoBox"></div>
     <div id="jucematNotifyBox"></div>
-    <div class="btn-row"><span></span><button class="btn primary" onclick="App.saveJucemat()">Salvar acompanhamento</button></div>
+    <div class="btn-row"><span></span><button class="btn primary" data-action="saveJucemat">Salvar acompanhamento</button></div>
   </div>
 </div>
 
 <!-- ===== Modal: novo/editar usuário ===== -->
 <div class="modal-overlay" id="usuarioModal">
   <div class="modal-box">
-    <button class="modal-close" onclick="App.closeUsuarioModal()">✕</button>
+    <button class="modal-close" data-action="closeUsuarioModal">✕</button>
     <h3 id="usuarioModalTitle">Novo usuário</h3>
     <div class="field" style="margin-bottom:12px;"><label>Nome completo</label><input type="text" id="usuarioNome" placeholder="Ex.: Ana Beatriz Souza"></div>
     <div class="field" style="margin-bottom:12px;"><label>E-mail corporativo</label><input type="text" id="usuarioEmail" placeholder="nome@gs2negocios.com.br"></div>
@@ -615,14 +613,14 @@
     <div class="field" style="margin-bottom:16px;">
       <label class="check-item" style="cursor:pointer;"><input type="checkbox" id="usuarioAtivo" checked> Usuário ativo (pode acessar a ferramenta)</label>
     </div>
-    <div class="btn-row"><span></span><button class="btn primary" onclick="App.saveUsuario()">Salvar usuário</button></div>
+    <div class="btn-row"><span></span><button class="btn primary" data-action="saveUsuario">Salvar usuário</button></div>
   </div>
 </div>
 
 <!-- ===== Modal: novo/editar requerente (dados para login gov.br na Viabilidade) ===== -->
 <div class="modal-overlay" id="requerenteModal">
   <div class="modal-box">
-    <button class="modal-close" onclick="App.closeRequerenteModal()">✕</button>
+    <button class="modal-close" data-action="closeRequerenteModal">✕</button>
     <h3 id="requerenteModalTitle">Novo requerente</h3>
     <div class="field" style="margin-bottom:12px;"><label>Nome completo</label><input type="text" id="requerenteNome" placeholder="Ex.: Marcus Vinicius Gomes"></div>
     <div class="field" style="margin-bottom:12px;"><label>CPF</label><input type="text" id="requerenteCpf" placeholder="000.000.000-00"></div>
@@ -631,7 +629,7 @@
     <div class="field" style="margin-bottom:16px;">
       <label class="check-item" style="cursor:pointer;"><input type="checkbox" id="requerenteAtivo" checked> Requerente ativo (disponível para seleção nos processos)</label>
     </div>
-    <div class="btn-row"><span></span><button class="btn primary" onclick="App.saveRequerente()">Salvar requerente</button></div>
+    <div class="btn-row"><span></span><button class="btn primary" data-action="saveRequerente">Salvar requerente</button></div>
   </div>
 </div>
 
@@ -658,11 +656,6 @@
      navegador — o documento do sócio não sai da máquina. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.0/tesseract.min.js"></script>
-<script>
-  if(window.pdfjsLib){
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  }
-</script>
 
 <!-- Camada de ambiente: configuração, autenticação, SharePoint e API -->
 <script src="js/integracao.js"></script>
@@ -697,6 +690,11 @@
      DIRETO do <body>: na impressão o CSS esconde todos os irmãos dele e
      mostra só este. Some com display:none fora da impressão. -->
 <div id="clientePdfDoc"></div>
+
+<!-- Delegação de eventos (data-action/data-args) e listeners de campos:
+     substitui os antigos atributos onclick/onchange/oninput/onkeydown, que a
+     Content-Security-Policy (script-src sem 'unsafe-inline') bloqueia. -->
+<script src="js/eventos.js"></script>
 
 <script src="js/inicializacao.js"></script>
 

@@ -155,7 +155,12 @@ const GS2Auth = {
       return r.accessToken;
     }catch(e){
       /* mesmo motivo de entrar(): pop-up do MSAL v5 não devolve resultado.
-         O redirect recarrega a página e a renovação conclui na volta. */
+         O redirect recarrega a página inteira — e isso pode acontecer no
+         meio do preenchimento de um formulário (a sessão Microsoft dura
+         ~1h). O auto-save do rascunho roda com 1,5s de atraso a cada
+         mudança; aqui força a gravação imediata antes de sair da página,
+         para não perder o que ainda não deu tempo de salvar sozinho. */
+      if(typeof App !== 'undefined' && App.salvarRascunho) App.salvarRascunho(false);
       await this.app.acquireTokenRedirect(req);
       throw new Error('Renovando a sessão Microsoft…');
     }

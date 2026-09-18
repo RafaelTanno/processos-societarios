@@ -54,13 +54,27 @@ fora do modo demonstração é recusado, porque o disco da Function é efêmero 
 dados sumiriam sem erro nenhum. Esquecer uma variável no portal do Azure tem de
 derrubar a API, nunca publicá-la aberta.
 
+**Nada de onclick/onchange/oninput/onfocus/onblur/onmousedown/onkeydown inline —
+nem no index.html, nem gerado por template string em `web/js/app-*.js`.** A CSP
+(`web/staticwebapp.config.json`) tem `script-src` **sem** `'unsafe-inline'` desde
+18/09/2026; qualquer atributo desses volta a ser bloqueado pelo navegador e o
+sintoma é botão que não responde, sem erro nenhum na tela. Em vez disso, todo
+elemento clicável/reativo leva `data-action="metodo"` (mais `data-args`,
+`data-event`, `data-value-from`, ou os pares `data-focus-*`/`data-blur-*`/
+`data-mousedown-*` para os poucos casos de mais de um evento no mesmo elemento) e
+`web/js/eventos.js` despacha por delegação de evento — ver o comentário no topo
+daquele arquivo para a lista completa das convenções. `testes/regressao-csp.js`
+falha se algum onclick/onchange/etc inline voltar, ou se `'unsafe-inline'` voltar
+para o script-src.
+
 **Escapar é obrigatório, e o helper certo importa.** `escapeHtml` para texto e
-atributo comum; `escapeAttr` SÓ para valor que vira string JavaScript dentro de um
-atributo (`onclick="App.f('AQUI')"`). O `escapeAttr` escapa primeiro para JS e
-depois para HTML, nessa ordem — o navegador decodifica as entidades ANTES de
-compilar o manipulador, e por causa disso um nome de arquivo do SharePoint com
-`&#39;` chegava a executar código. Nome de arquivo, célula de planilha, texto de
-PDF e mensagem de erro são todos dado não confiável.
+atributo comum. `App.attrJson` (em `app-1-sessao-clientes.js`) serializa os
+argumentos de um `data-args` em JSON e escapa para caber no atributo HTML — é o
+helper certo para todo `data-action`/`data-args` gerado por template string.
+`escapeAttr` ficou só para os poucos atributos que ainda levam string simples
+(`title="..."`, `value="..."`, `<option value="...">`) — **não use `escapeAttr`
+para montar `data-args`**, é `attrJson` quem faz isso. Nome de arquivo, célula de
+planilha, texto de PDF e mensagem de erro são todos dado não confiável.
 
 **Nada é gravado sem o usuário ver.** Vale para a importação de planilha (confere
 antes), para a varredura do acervo (mostra a tabela antes de gravar) e para o
@@ -140,6 +154,7 @@ web/                 a ferramenta (app_location no Azure Static Web Apps)
                      Object.assign(App, {...}) — sem bundler, a ordem importa
   js/app-7-acervo.js tela da varredura + ligação do acervo com o Painel
   js/importacao.js   importação da base inicial por planilha
+  js/eventos.js      delegação de evento (data-action/data-args) — ver CSP acima
   js/inicializacao.js
   dados/             CNAE (IBGE), clientes, estrutura de pastas, modelos, cadastros
   vendor/            msal-browser (Entra) e xlsx (leitura de planilha)
@@ -182,6 +197,7 @@ Para apagar tudo e recomeçar: `rm -rf .dados`.
   node testes/montagem-da-ficha.js        # ficha, linha do tempo, leitura do Cartão CNPJ
   node testes/seguranca-da-api.js         # 36 regressões da auditoria de 08/09/2026
   node testes/estresse.js                 # 20 mil nomes hostis, 400 escritas simultâneas
+  node testes/regressao-csp.js            # CSP sem unsafe-inline, zero onclick inline, sem responseOverrides mascarando 404
   ```
 
   `seguranca-da-api.js` não é teoria: cada linha dele corresponde a uma porta que

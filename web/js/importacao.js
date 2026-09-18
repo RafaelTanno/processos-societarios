@@ -48,7 +48,7 @@ Object.assign(App, {
           </p>
           <div class="btn-row" style="justify-content:flex-start;gap:8px;flex-wrap:wrap;">
             <a class="btn" href="../modelos/importacao-processos.xlsx" download>⬇ Baixar a planilha modelo (.xlsx)</a>
-            <button class="btn ghost" onclick="App.baixarModeloCsv()">ou baixar como .csv</button>
+            <button class="btn ghost" data-action="baixarModeloCsv">ou baixar como .csv</button>
           </div>
         </div>
       </div>
@@ -291,8 +291,8 @@ Object.assign(App, {
             </table>
           </div>
           <div class="btn-row" style="margin-top:16px;">
-            <button class="btn ghost" onclick="App.renderImportacao()">Cancelar</button>
-            <button class="btn dark" ${ok.length ? '' : 'disabled'} onclick="App.confirmarImportacao()">
+            <button class="btn ghost" data-action="renderImportacao">Cancelar</button>
+            <button class="btn dark" ${ok.length ? '' : 'disabled'} data-action="confirmarImportacao">
               Importar ${ok.length} processo(s) →
             </button>
           </div>
@@ -365,8 +365,8 @@ Object.assign(App, {
             <span>✕</span><span class="grow"><b>${falhas.length} falharam:</b><br>${
               falhas.map(f=>`${this.escapeHtml(f.cliente)} — ${this.escapeHtml(f.erro)}`).join('<br>')}</span></div>` : ''}
           <div class="btn-row" style="justify-content:flex-start;gap:8px;">
-            <button class="btn dark" onclick="App.navigate('processos')">Ver em Meus Processos →</button>
-            <button class="btn" onclick="App.renderImportacao()">Importar outra planilha</button>
+            <button class="btn dark" data-action="navigate" data-args='["processos"]'>Ver em Meus Processos →</button>
+            <button class="btn" data-action="renderImportacao">Importar outra planilha</button>
           </div>
         </div>
       </div>`;

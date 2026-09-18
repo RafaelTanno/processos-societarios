@@ -14,7 +14,7 @@ window.GS2_CONFIG_OVERRIDE = {
   tenantId: '44dc8619-1a51-4256-8906-6d20a151bd5c',   // "ID do diretório (locatário)"
   clientId: 'e41ffa31-1e16-4b3d-b53b-479ffb174080',   // "ID do aplicativo (cliente)"
 
-  /* Deixe vazio para usar <origem>/auth.html */
+  /* Deixe vazio para usar <origem>/login */
   redirectUri: '',
 
   /* Quem entra como Administrador. O resto da equipe entra como Colaborador. */

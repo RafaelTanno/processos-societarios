@@ -91,8 +91,8 @@ Object.assign(App, {
         <div class="doc-row">
           <div class="doc-info"><div class="name">${d.label}${d.pj?'<span class="ocr-tag" style="background:var(--dark);">PJ</span>':''}</div><div class="req">${d.pj ? 'Obrigatório por ter sócio pessoa jurídica' : 'Obrigatório para '+TIPOS[wizard.tipo].label.toLowerCase()}</div></div>
           <div>
-            <div class="dropzone ${f?'filled':''}" id="dz-${d.id}" onclick="document.getElementById('fi-${d.id}').click()">${f ? '✓ '+f.name : 'Arrastar arquivo ou clicar para selecionar'}</div>
-            <input type="file" id="fi-${d.id}" style="display:none" onchange="App.handleDocFile('${d.id}', this.files)">
+            <div class="dropzone ${f?'filled':''}" id="dz-${d.id}" data-action="click-target" data-target="fi-${d.id}">${f ? '✓ '+f.name : 'Arrastar arquivo ou clicar para selecionar'}</div>
+            <input type="file" id="fi-${d.id}" style="display:none" data-action="handleDocFile" data-args='${this.attrJson([d.id])}' data-event="change" data-value-from="files">
           </div>
         </div>
         <div style="font-size:11px;color:var(--muted);margin-top:5px;font-family:ui-monospace,monospace;line-height:1.5;">
@@ -144,7 +144,7 @@ Object.assign(App, {
     }
   },
   addExtraFiles(files){ Array.from(files).forEach(f=> wizard.extraFiles.push(f)); this.renderExtraFiles(); },
-  renderExtraFiles(){ const el=document.getElementById('extraFiles'); if(!el) return; el.innerHTML = wizard.extraFiles.map((f,i)=>`<span class="file-chip">${this.escapeHtml(f.name)} <span class="x" onclick="App.removeExtraFile(${i})">✕</span></span>`).join(''); },
+  renderExtraFiles(){ const el=document.getElementById('extraFiles'); if(!el) return; el.innerHTML = wizard.extraFiles.map((f,i)=>`<span class="file-chip">${this.escapeHtml(f.name)} <span class="x" data-action="removeExtraFile" data-args='${this.attrJson([i])}'>✕</span></span>`).join(''); },
   removeExtraFile(i){ wizard.extraFiles.splice(i,1); this.renderExtraFiles(); },
 
   /* ---------- Step 5: review + contract ---------- */
@@ -230,12 +230,12 @@ Object.assign(App, {
         <div class="btn-row" style="margin-top:10px;">
           <span></span>
           <div style="display:flex;gap:10px;">
-            <button class="btn ghost" onclick="App.copiarResumoCliente()">📋 Copiar resumo (texto)</button>
-            <button class="btn dark" onclick="App.gerarPdfResumo()">📄 Gerar PDF do resumo</button>
+            <button class="btn ghost" data-action="copiarResumoCliente">📋 Copiar resumo (texto)</button>
+            <button class="btn dark" data-action="gerarPdfResumo">📄 Gerar PDF do resumo</button>
           </div>
         </div>
         <label class="check-item" style="cursor:pointer;margin-top:16px;">
-          <input type="checkbox" id="aguardaConfirmacaoCliente" ${wizard.aguardaConfirmacaoCliente?'checked':''} onchange="App.toggleAguardaConfirmacao(this.checked)">
+          <input type="checkbox" id="aguardaConfirmacaoCliente" ${wizard.aguardaConfirmacaoCliente?'checked':''} data-action="toggleAguardaConfirmacao" data-event="change" data-value-from="checked">
           Aguardando confirmação dos dados pelo cliente antes de enviar à Junta Comercial
         </label>
       </div>`;
@@ -623,8 +623,8 @@ Object.assign(App, {
         <div class="doc-row">
           <div class="doc-info"><div class="name">${d.label}</div></div>
           <div>
-            <div class="dropzone ${f?'filled':''}" id="dz-junta-${d.id}" onclick="document.getElementById('fi-junta-${d.id}').click()">${f ? '✓ '+f.name : 'Arrastar arquivo ou clicar para selecionar'}</div>
-            <input type="file" id="fi-junta-${d.id}" style="display:none" onchange="App.handleJuntaDocFile('${d.id}', this.files)">
+            <div class="dropzone ${f?'filled':''}" id="dz-junta-${d.id}" data-action="click-target" data-target="fi-junta-${d.id}">${f ? '✓ '+f.name : 'Arrastar arquivo ou clicar para selecionar'}</div>
+            <input type="file" id="fi-junta-${d.id}" style="display:none" data-action="handleJuntaDocFile" data-args='${this.attrJson([d.id])}' data-event="change" data-value-from="files">
           </div>
         </div>
       </div>`;
@@ -684,11 +684,11 @@ Object.assign(App, {
             : `<div class="ocr-strip" style="margin:0 0 12px;background:var(--status-warn-bg);color:var(--status-warn);align-items:flex-start;"><span>⚠️</span><span class="grow"><b>Faltam ${p.faltando.length} campo(s).</b> Levante isto <b>antes</b> de abrir o protocolo — no meio do wizard do portal não dá para voltar sem perder o preenchimento.</span></div>
                <div style="margin-bottom:12px;">${listaFaltas}</div>`}
           <div class="btn-row" style="gap:8px;flex-wrap:wrap;justify-content:flex-start;">
-            <button class="btn" onclick="App.copiarPayloadViabilidade()">📋 Copiar dados para o portal</button>
-            <button class="btn" onclick="App.baixarPayloadViabilidade()">⬇ Baixar dados (JSON)</button>
-            <button class="btn" onclick="App.verMapaViabilidade()">🗺 Ver mapa dos campos</button>
+            <button class="btn" data-action="copiarPayloadViabilidade">📋 Copiar dados para o portal</button>
+            <button class="btn" data-action="baixarPayloadViabilidade">⬇ Baixar dados (JSON)</button>
+            <button class="btn" data-action="verMapaViabilidade">🗺 Ver mapa dos campos</button>
             ${GS2Redesim.automacaoDisponivel()
-              ? `<button class="btn dark" onclick="App.dispararAutomacaoViabilidade()">Preencher no portal (automático)</button>`
+              ? `<button class="btn dark" data-action="dispararAutomacaoViabilidade">Preencher no portal (automático)</button>`
               : `<span style="font-size:11.5px;color:var(--muted);align-self:center;">Preenchimento automático: Fase 2, ainda não disponível para ${this.escapeHtml(a ? a.orgao : 'este estado')}.</span>`}
           </div>
         </div>
@@ -744,7 +744,7 @@ Object.assign(App, {
   renderJuntaExtraFiles(){
     const label = document.getElementById('juntaExtraFilesLabel');
     if(!label) return;
-    label.innerHTML = wizard.juntaExtraFiles.map((f,i)=>`<span class="file-chip">${f.name}<span class="x" onclick="event.stopPropagation();App.removeJuntaExtraFile(${i})">✕</span></span>`).join('');
+    label.innerHTML = wizard.juntaExtraFiles.map((f,i)=>`<span class="file-chip">${f.name}<span class="x" data-action="removeJuntaExtraFile" data-args='${this.attrJson([i])}'>✕</span></span>`).join('');
   },
   removeJuntaExtraFile(i){ wizard.juntaExtraFiles.splice(i,1); this.renderJuntaExtraFiles(); },
 
@@ -774,11 +774,11 @@ Object.assign(App, {
           <div class="doc-info"><div class="name">${item.label}</div></div>
           <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
             <label class="check-item" style="cursor:pointer;">
-              <input type="checkbox" ${st.na?'checked':''} onchange="App.toggleLicenciamentoNA('${item.id}', this.checked)"> Não se aplica a este processo
+              <input type="checkbox" ${st.na?'checked':''} data-action="toggleLicenciamentoNA" data-args='${this.attrJson([item.id])}' data-event="change" data-value-from="checked"> Não se aplica a este processo
             </label>
             ${st.na ? '' : `<div>
-              <div class="dropzone ${f?'filled':''}" id="dz-lic-${item.id}" onclick="document.getElementById('fi-lic-${item.id}').click()">${f ? '✓ '+f.name : 'Arrastar arquivo ou clicar para selecionar'}</div>
-              <input type="file" id="fi-lic-${item.id}" style="display:none" onchange="App.handleLicenciamentoFile('${item.id}', this.files)">
+              <div class="dropzone ${f?'filled':''}" id="dz-lic-${item.id}" data-action="click-target" data-target="fi-lic-${item.id}">${f ? '✓ '+f.name : 'Arrastar arquivo ou clicar para selecionar'}</div>
+              <input type="file" id="fi-lic-${item.id}" style="display:none" data-action="handleLicenciamentoFile" data-args='${this.attrJson([item.id])}' data-event="change" data-value-from="files">
             </div>`}
           </div>
         </div>
