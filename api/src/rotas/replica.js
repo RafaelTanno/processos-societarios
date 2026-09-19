@@ -38,8 +38,9 @@ function desligada() {
         ? 'GS2_REPLICA=1, mas falta a identidade gerenciada com Sites.Selected no site.'
         : 'Réplica desligada (GS2_REPLICA != 1). Etapa 2 ainda não ativada.',
       comoLigar: [
-        'Criar a identidade gerenciada da Function no Azure',
-        'Conceder Sites.Selected (nível read) apenas no site ' + cfg.sharepoint.sitePath,
+        'Registrar um aplicativo próprio no Entra ID com segredo (o plano Free do Static Web Apps não oferece identidade gerenciada)',
+        'Conceder a ele Sites.Selected (nível read) apenas no site ' + cfg.sharepoint.sitePath,
+        'Definir GS2_REPLICA_TENANT_ID, GS2_REPLICA_CLIENT_ID e GS2_REPLICA_CLIENT_SECRET',
         'Definir GS2_REPLICA=1, GS2_WEBHOOK_URL e GS2_WEBHOOK_CLIENT_STATE',
         'Chamar POST /api/replica/assinatura para criar a assinatura no Graph'
       ]

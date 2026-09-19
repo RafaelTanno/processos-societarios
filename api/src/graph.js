@@ -26,8 +26,18 @@ let cacheToken = { valor: '', expira: 0 };
 async function token() {
   if (cacheToken.valor && Date.now() < cacheToken.expira - 60000) return cacheToken.valor;
   if (!credencial) {
-    const { DefaultAzureCredential } = require('@azure/identity');
-    credencial = new DefaultAzureCredential();
+    const c = cfg.replicaCredencial;
+    if (c.tenantId && c.clientId && c.clientSecret) {
+      /* Registro de aplicativo com segredo. É o caminho possível no plano
+         Free do Static Web Apps, que não oferece identidade gerenciada
+         (a tela de Identidade exige plano Standard). */
+      const { ClientSecretCredential } = require('@azure/identity');
+      credencial = new ClientSecretCredential(c.tenantId, c.clientId, c.clientSecret);
+    } else {
+      /* Sem segredo configurado: identidade gerenciada, quando houver. */
+      const { DefaultAzureCredential } = require('@azure/identity');
+      credencial = new DefaultAzureCredential();
+    }
   }
   const t = await credencial.getToken('https://graph.microsoft.com/.default');
   if (!t || !t.token) throw new Error('A identidade gerenciada não devolveu token para o Graph.');

@@ -38,8 +38,21 @@ const cfg = {
     sitePath: env.GS2_SP_SITE || '/sites/clientes',
     biblioteca: env.GS2_SP_BIBLIOTECA || 'Documentos Compartilhados'
   },
-  /* a réplica só liga quando isto for "1" E houver identidade gerenciada */
+  /* a réplica só liga quando isto for "1" E houver credencial para o Graph */
   replicaLigada: env.GS2_REPLICA === '1',
+  /* Credencial própria da réplica para falar com o Graph.
+     Nomes próprios de propósito: AZURE_CLIENT_ID/AZURE_CLIENT_SECRET/
+     AZURE_TENANT_ID são lidos automaticamente por QUALQUER
+     DefaultAzureCredential do processo — inclusive o que o db/cosmos.js usa
+     quando COSMOS_KEY está vazio. Com aqueles nomes, esvaziar a COSMOS_KEY
+     um dia faria o banco tentar autenticar como o aplicativo da réplica,
+     que não tem permissão nenhuma no Cosmos, e o erro não apontaria para
+     cá. Vazio = tenta identidade gerenciada (plano Standard). */
+  replicaCredencial: {
+    tenantId: env.GS2_REPLICA_TENANT_ID || '',
+    clientId: env.GS2_REPLICA_CLIENT_ID || '',
+    clientSecret: env.GS2_REPLICA_CLIENT_SECRET || ''
+  },
   /* segredo combinado com o Graph para provar que a notificação é legítima */
   webhookClientState: env.GS2_WEBHOOK_CLIENT_STATE || '',
   /* URL pública deste endpoint, registrada na assinatura do Graph */
