@@ -101,7 +101,7 @@ async function lerEstado(banco) {
    estava. As funções gerenciadas do Static Web Apps cortam a requisição
    por volta de 45s; parar em 20s deixa folga para o que já foi lido ser
    gravado e para a resposta sair. */
-const ORCAMENTO_MS = 15000;
+const ORCAMENTO_MS = 28000;
 
 /* Duas varreduras ao mesmo tempo se desfazem: cada uma grava seu próprio
    ponto de retomada, e a que salva por último joga fora o avanço da outra
@@ -267,7 +267,15 @@ async function executarSincronizacao(banco) {
       e.proximoLink = '';
     }
     e.ultimaSincronizacao = new Date().toISOString();
-    e.itens = await banco.contar('replica');
+    /* Contar varre o contêiner inteiro, e ele já passa de 70 mil documentos:
+       a conta fica mais cara a cada rodada e sai do orçamento de tempo. O
+       número exato só importa quando a varredura termina; enquanto ela está
+       em andamento basta o acumulado, que é somado sem consultar nada. */
+    e.gravadosAcumulados = (e.gravadosAcumulados || 0) + resumo.gravados;
+    if (!resumo.parcial) {
+      e.itens = await banco.contar('replica');
+      e.gravadosAcumulados = 0;
+    }
     e.ultimoErro = '';
     e.varrendoDesde = '';
     await banco.salvar('replica', e);
