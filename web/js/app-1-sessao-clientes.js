@@ -269,10 +269,14 @@ const App = {
     } else {
       const i = GS2Api.info || {};
       add('ok', 'Backend (API de dados)', `versão ${i.versao} · autenticação: ${i.autenticacao}`);
+      /* `banco` (detalhado) só vem para administrador; `bancoOk` vem para
+         qualquer um. Sem esse segundo caso, quem não é admin — ou quem
+         chamou antes de ter token — via "sem resposta" com o banco de pé. */
       const b = i.banco || {};
-      add(b.ok ? 'ok' : 'erro', 'Banco de dados',
+      const bancoOk = b.ok !== undefined ? b.ok : i.bancoOk;
+      add(bancoOk ? 'ok' : 'erro', 'Banco de dados',
           b.ok ? `${b.tipo} em ${b.local} · ` + Object.keys(b.registros||{}).map(k=>`${k}: ${b.registros[k]}`).join(' · ')
-               : (b.erro || 'sem resposta'));
+               : (bancoOk ? 'respondendo (detalhe só para administrador)' : (b.erro || i.bancoErro || 'sem resposta')));
       add(i.replica && i.replica.ligada ? 'ok' : 'aviso', 'Réplica do SharePoint (etapa 2)',
           i.replica && i.replica.ligada ? 'ligada' : 'desligada — conferência automática ainda não ativada');
       add(i.retencaoDias ? 'ok' : 'aviso', 'Retenção de dados pessoais',
@@ -370,6 +374,10 @@ const App = {
     try{
       /* duas cargas independentes: em paralelo, não uma atrás da outra */
       await Promise.all([ GS2Api.carregarEstado(), this.carregarAcervo() ]);
+      /* carregarEstado() pode ter corrigido o papel com o que a API decidiu
+         (ver o comentário lá): redesenha chip e menu com o papel de verdade */
+      this.renderUserChip();
+      this.renderAdminNav();
       if(!GS2Api.exemplosPendentes) PROCESSOS.forEach(p=>{ p._persistido = true; });
       if(this.ehUsuarioCliente()) this.navigate('clientes'); else this.renderDashboard();
       this.renderBannerSemente();

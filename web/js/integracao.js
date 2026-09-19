@@ -254,12 +254,17 @@ const GS2Api = {
     return dados;
   },
 
-  /* Existe backend? Chamada sem autenticação, de propósito. */
+  /* Existe backend? Vai autenticada QUANDO há sessão: /api/saude responde a
+     qualquer um, mas só conta o estado do banco e da réplica para quem é
+     administrador. Sem o token aqui, o diagnóstico lia campo ausente como
+     "banco sem resposta" e "réplica desligada" mesmo com os dois de pé — e
+     foi atrás desse falso alarme que se perderam horas em 18/09/2026. Antes
+     do login não há token e a chamada segue anônima, como antes. */
   async verificar(){
     try{
       const ctrl = new AbortController();
       const t = setTimeout(()=>ctrl.abort(), 4000);
-      const r = await fetch(this.base + '/saude', {signal: ctrl.signal});
+      const r = await fetch(this.base + '/saude', {signal: ctrl.signal, headers: await this.cabecalhos()});
       clearTimeout(t);
       if(!r.ok) throw new Error('HTTP ' + r.status);
       this.info = await r.json();
@@ -277,6 +282,13 @@ const GS2Api = {
   async carregarEstado(){
     if(!this.disponivel) return null;
     const e = await this.chamar('/estado');
+    /* O papel vem de quem decide: a API o deriva do e-mail dentro do token
+       assinado. A tela calculava o dela por conta própria, a partir da lista
+       de administradores do config.js — e as duas discordavam sempre que o
+       GS2_ADMINS do Azure tinha alguém que o config.js não tinha. O sintoma
+       era a pessoa ser admin de verdade na API e mesmo assim não ver o menu
+       Administração. Autoridade não se duplica: manda o que veio no token. */
+    if(e.usuario && e.usuario.papel) currentUser.papel = e.usuario.papel;
     if(Array.isArray(e.processos)){
       if(e.processos.length){
         /* o banco tem dado: ele manda, e os exemplos embutidos somem */
