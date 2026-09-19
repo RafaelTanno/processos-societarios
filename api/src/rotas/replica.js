@@ -59,7 +59,7 @@ async function lerEstado(banco) {
    estava. As funções gerenciadas do Static Web Apps cortam a requisição
    por volta de 45s; parar em 20s deixa folga para o que já foi lido ser
    gravado e para a resposta sair. */
-const ORCAMENTO_MS = 20000;
+const ORCAMENTO_MS = 15000;
 
 /* ------------------------------------------------------------------ */
 async function estado(ctx) {
@@ -89,7 +89,7 @@ async function sincronizar(ctx) {
 async function executarSincronizacao(banco) {
   const graph = require('../graph');
   const comeco = Date.now();
-  const resumo = { criados: 0, alterados: 0, removidos: 0, paginas: 0, reenumerou: false, parcial: false };
+  const resumo = { gravados: 0, removidos: 0, paginas: 0, reenumerou: false, parcial: false };
   let e;
 
   try {
@@ -120,38 +120,60 @@ async function executarSincronizacao(banco) {
       }
       resumo.paginas++;
 
-      for (const item of (pagina.value || [])) {
-        const id = 'item-' + item.id;
-        if (item.deleted) {
-          if (await banco.remover('replica', id)) resumo.removidos++;
-          continue;
-        }
-        const anterior = await banco.obter('replica', id);
-        /* guardamos o essencial, não o arquivo: o SharePoint continua
-           sendo a verdade sobre o conteúdo */
-        await banco.salvar('replica', {
-          id,
-          driveId: d.driveId,
-          itemId: item.id,
-          nome: item.name || '',
-          paiId: (item.parentReference && item.parentReference.id) || '',
-          pasta: !!item.folder,
-          tamanho: item.size || 0,
-          alteradoEm: item.lastModifiedDateTime || '',
-          webUrl: item.webUrl || '',
-          vistoEm: new Date().toISOString()
-        });
-        if (anterior) resumo.alterados++; else resumo.criados++;
+      /* Marca a página ATUAL como ponto de retomada antes de processá-la:
+         se o tempo acabar no meio dela, a próxima chamada recomeça por
+         esta mesma página em vez de voltar ao início da biblioteca. */
+      e.proximoLink = url;
+      e.ultimoErro = '';
+      await banco.salvar('replica', e);
+
+      /* Uma página traz centenas de itens. Em fila, com uma leitura e uma
+         gravação por item, isso sozinho estoura o tempo da requisição — era
+         o que derrubava a primeira varredura. Duas mudanças: a leitura
+         prévia saiu (ela só servia para separar "criado" de "alterado" na
+         contagem, e o upsert não precisa dela) e as gravações vão em lotes
+         paralelos. */
+      const itens = pagina.value || [];
+      const apagar = itens.filter(i => i.deleted);
+      const gravar = itens.filter(i => !i.deleted);
+
+      for (const item of apagar) {
+        if (await banco.remover('replica', 'item-' + item.id)) resumo.removidos++;
       }
+
+      const LOTE = 25;
+      for (let i = 0; i < gravar.length; i += LOTE) {
+        await Promise.all(gravar.slice(i, i + LOTE).map(item =>
+          /* guardamos o essencial, não o arquivo: o SharePoint continua
+             sendo a verdade sobre o conteúdo */
+          banco.salvar('replica', {
+            id: 'item-' + item.id,
+            driveId: d.driveId,
+            itemId: item.id,
+            nome: item.name || '',
+            paiId: (item.parentReference && item.parentReference.id) || '',
+            pasta: !!item.folder,
+            tamanho: item.size || 0,
+            alteradoEm: item.lastModifiedDateTime || '',
+            webUrl: item.webUrl || '',
+            vistoEm: new Date().toISOString()
+          })
+        ));
+        resumo.gravados += Math.min(LOTE, gravar.length - i);
+        /* estourou o orçamento no meio da página: para aqui. A página
+           inteira será refeita na próxima chamada, e refazer é inofensivo
+           porque gravar é upsert — o mesmo item duas vezes dá o mesmo
+           resultado. */
+        if (Date.now() - comeco > ORCAMENTO_MS) { resumo.parcial = true; break; }
+      }
+      if (resumo.parcial) break;
 
       url = pagina['@odata.nextLink'] || '';
       deltaLink = pagina['@odata.deltaLink'] || deltaLink;
 
-      /* Grava o progresso a cada página: se a próxima estourar o tempo, o
-         que já foi lido não se perde. */
+      /* página inteira concluída: o ponto de retomada avança */
       e.proximoLink = url;
       if (deltaLink) e.deltaLink = deltaLink;
-      e.ultimoErro = '';
       await banco.salvar('replica', e);
 
       if (url && Date.now() - comeco > ORCAMENTO_MS) {
