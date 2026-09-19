@@ -55,6 +55,19 @@ async function chamar(caminho, opcoes) {
     corpo = JSON.stringify(opcoes.json);
   }
   const r = await fetch(url, { method: opcoes.method || 'GET', headers: cabecalhos, body: corpo });
+
+  /* 401 com token que o Entra emitiu sem reclamar costuma ser token velho:
+     ele foi emitido ANTES de a permissão do aplicativo ser concedida, e um
+     token já emitido não ganha permissão nova. Como o token fica em cache
+     por ~1h, sem isto a réplica continuaria recusada por uma hora depois de
+     o consentimento ter sido dado — e o erro não diria isso. Descarta o
+     cache (credencial inclusive, que tem cache próprio) e tenta uma vez. */
+  if (r.status === 401 && !opcoes._reautenticou) {
+    cacheToken = { valor: '', expira: 0 };
+    credencial = null;
+    return chamar(caminho, Object.assign({}, opcoes, { _reautenticou: true }));
+  }
+
   if (!r.ok) {
     let detalhe = '';
     try { const j = await r.json(); detalhe = (j.error && (j.error.message || j.error.code)) || ''; } catch (e) {}
