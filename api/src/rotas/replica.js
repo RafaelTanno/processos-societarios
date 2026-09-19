@@ -50,10 +50,16 @@ function desligada() {
 
 async function lerEstado(banco) {
   return (await banco.obter('replica', ID_ESTADO)) || {
-    id: ID_ESTADO, driveId: 'pendente', deltaLink: '', ultimaSincronizacao: '',
-    itens: 0, ultimoErro: '', assinatura: null
+    id: ID_ESTADO, driveId: 'pendente', deltaLink: '', proximoLink: '',
+    ultimaSincronizacao: '', itens: 0, ultimoErro: '', assinatura: null
   };
 }
+
+/* Quanto tempo a varredura pode gastar antes de parar e guardar onde
+   estava. As funções gerenciadas do Static Web Apps cortam a requisição
+   por volta de 45s; parar em 20s deixa folga para o que já foi lido ser
+   gravado e para a resposta sair. */
+const ORCAMENTO_MS = 20000;
 
 /* ------------------------------------------------------------------ */
 async function estado(ctx) {
@@ -82,14 +88,20 @@ async function sincronizar(ctx) {
 
 async function executarSincronizacao(banco) {
   const graph = require('../graph');
-  const e = await lerEstado(banco);
-  const resumo = { criados: 0, alterados: 0, removidos: 0, paginas: 0, reenumerou: false };
+  const comeco = Date.now();
+  const resumo = { criados: 0, alterados: 0, removidos: 0, paginas: 0, reenumerou: false, parcial: false };
+  let e;
 
   try {
+    e = await lerEstado(banco);
     const d = await graph.drive();
     e.driveId = d.driveId;
 
-    let url = e.deltaLink || `/drives/${d.driveId}/root/delta`;
+    /* `proximoLink` guardado = a varredura anterior parou no meio (estourou
+       o orçamento de tempo) e continua daqui. Sem isso, biblioteca grande
+       nunca terminaria: cada tentativa recomeçava do zero e era cortada no
+       mesmo lugar. */
+    let url = e.proximoLink || e.deltaLink || `/drives/${d.driveId}/root/delta`;
     let deltaLink = '';
 
     while (url) {
@@ -134,9 +146,24 @@ async function executarSincronizacao(banco) {
 
       url = pagina['@odata.nextLink'] || '';
       deltaLink = pagina['@odata.deltaLink'] || deltaLink;
+
+      /* Grava o progresso a cada página: se a próxima estourar o tempo, o
+         que já foi lido não se perde. */
+      e.proximoLink = url;
+      if (deltaLink) e.deltaLink = deltaLink;
+      e.ultimoErro = '';
+      await banco.salvar('replica', e);
+
+      if (url && Date.now() - comeco > ORCAMENTO_MS) {
+        resumo.parcial = true;
+        break;
+      }
     }
 
-    e.deltaLink = deltaLink || e.deltaLink;
+    if (!resumo.parcial) {
+      e.deltaLink = deltaLink || e.deltaLink;
+      e.proximoLink = '';
+    }
     e.ultimaSincronizacao = new Date().toISOString();
     e.itens = await banco.contar('replica');
     e.ultimoErro = '';
@@ -144,10 +171,12 @@ async function executarSincronizacao(banco) {
 
     return { status: 200, corpo: { ok: true, resumo, estado: e } };
   } catch (err) {
-    e.ultimoErro = err.message;
-    e.ultimaSincronizacao = new Date().toISOString();
-    await banco.salvar('replica', e);
-    return { status: 502, corpo: { ok: false, erro: err.message, estado: e } };
+    if (e) {
+      e.ultimoErro = err.message;
+      e.ultimaSincronizacao = new Date().toISOString();
+      try { await banco.salvar('replica', e); } catch (e2) { /* banco fora: o erro original já sobe */ }
+    }
+    return { status: 502, corpo: { ok: false, erro: err.message } };
   }
 }
 
