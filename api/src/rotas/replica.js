@@ -29,6 +29,18 @@ const { pode } = require('../auth');
 
 const ID_ESTADO = 'estado-delta';
 
+/* Partição FIXA do documento de estado.
+   O contêiner `replica` particiona por driveId, e o estado nascia com
+   driveId 'pendente' e passava a gravar com o id real do drive assim que
+   a varredura o descobria. No Cosmos a chave de partição não é editável:
+   gravar o mesmo id com outra chave CRIA UM SEGUNDO DOCUMENTO, e a leitura
+   sem chave devolve um dos dois ao acaso (o cosmos.js avisa disso no
+   comentário do obter). O resultado, em 19/09/2026, foi o progresso da
+   réplica subir, voltar a zero e travar, sem nada nos dados estar errado —
+   era o estado sendo lido de duas realidades diferentes.
+   O drive real continua registrado, mas em `driveReal`, que não é chave. */
+const PARTICAO_ESTADO = 'estado';
+
 function desligada() {
   return {
     status: 200,
@@ -48,12 +60,41 @@ function desligada() {
   };
 }
 
-async function lerEstado(banco) {
-  return (await banco.obter('replica', ID_ESTADO)) || {
-    id: ID_ESTADO, driveId: 'pendente', deltaLink: '', proximoLink: '',
-    indiceNaPagina: 0, ultimaSincronizacao: '', itens: 0, ultimoErro: '',
-    assinatura: null
+function estadoNovo() {
+  return {
+    id: ID_ESTADO, driveId: PARTICAO_ESTADO, driveReal: '', deltaLink: '',
+    proximoLink: '', indiceNaPagina: 0, ultimaSincronizacao: '', itens: 0,
+    ultimoErro: '', varrendoDesde: '', assinatura: null
   };
+}
+
+async function lerEstado(banco) {
+  /* leitura pontual, na partição fixa: sempre o mesmo documento */
+  const atual = await banco.obter('replica', ID_ESTADO, PARTICAO_ESTADO);
+  if (atual) return atual;
+
+  /* Não existe ainda na partição fixa: pode ser primeira execução, ou
+     pode haver estado das versões anteriores espalhado por outras
+     partições. Adota o mais avançado e apaga os demais, para não voltar
+     a ler dois documentos diferentes de forma alternada. */
+  const antigos = (await banco.listar('replica', { id: ID_ESTADO })) || [];
+  if (!antigos.length) return estadoNovo();
+
+  const melhor = antigos.slice().sort((a, b) => (b.itens || 0) - (a.itens || 0))[0];
+  const migrado = Object.assign(estadoNovo(), melhor, {
+    driveId: PARTICAO_ESTADO,
+    driveReal: melhor.driveReal || (melhor.driveId !== PARTICAO_ESTADO ? melhor.driveId : ''),
+    /* varredura antiga pode ter morrido segurando a trava */
+    varrendoDesde: ''
+  });
+  await banco.salvar('replica', migrado);
+
+  for (const velho of antigos) {
+    if (velho.driveId && velho.driveId !== PARTICAO_ESTADO) {
+      try { await banco.remover('replica', ID_ESTADO, velho.driveId); } catch (e) { /* já foi */ }
+    }
+  }
+  return migrado;
 }
 
 /* Quanto tempo a varredura pode gastar antes de parar e guardar onde
@@ -123,7 +164,9 @@ async function executarSincronizacao(banco) {
     await banco.salvar('replica', e);
 
     const d = await graph.drive();
-    e.driveId = d.driveId;
+    /* driveReal, nunca driveId: driveId é a chave de partição do estado e
+       precisa permanecer fixa (ver PARTICAO_ESTADO) */
+    e.driveReal = d.driveId;
 
     /* `proximoLink` guardado = a varredura anterior parou no meio (estourou
        o orçamento de tempo) e continua daqui. Sem isso, biblioteca grande
