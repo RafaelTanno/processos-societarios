@@ -62,6 +62,20 @@ async function lerEstado(banco) {
    gravado e para a resposta sair. */
 const ORCAMENTO_MS = 15000;
 
+/* Duas varreduras ao mesmo tempo se desfazem: cada uma grava seu próprio
+   ponto de retomada, e a que salva por último joga fora o avanço da outra
+   — na prática a réplica anda para trás e nunca termina. Isso não é
+   hipótese: aconteceu em 19/09/2026 com duas abas disparando ao mesmo
+   tempo, e acontece sozinho quando o webhook dispara durante uma varredura
+   manual. O dono é registrado no próprio estado, com hora: se quem
+   segurava travou no meio, o registro vence e a próxima chamada assume. */
+const TRAVA_MS = 90000;
+
+function travada(e) {
+  if (!e.varrendoDesde) return false;
+  return (Date.now() - new Date(e.varrendoDesde).getTime()) < TRAVA_MS;
+}
+
 /* ------------------------------------------------------------------ */
 async function estado(ctx) {
   if (!pode(ctx.usuario, 'replica:operar')) {
@@ -95,6 +109,19 @@ async function executarSincronizacao(banco) {
 
   try {
     e = await lerEstado(banco);
+    if (travada(e)) {
+      return {
+        status: 409,
+        corpo: {
+          ok: false,
+          erro: 'Já existe uma varredura em andamento. Espere ela terminar antes de disparar outra.',
+          estado: e
+        }
+      };
+    }
+    e.varrendoDesde = new Date().toISOString();
+    await banco.salvar('replica', e);
+
     const d = await graph.drive();
     e.driveId = d.driveId;
 
@@ -199,6 +226,7 @@ async function executarSincronizacao(banco) {
     e.ultimaSincronizacao = new Date().toISOString();
     e.itens = await banco.contar('replica');
     e.ultimoErro = '';
+    e.varrendoDesde = '';
     await banco.salvar('replica', e);
 
     return { status: 200, corpo: { ok: true, resumo, estado: e } };
@@ -206,6 +234,7 @@ async function executarSincronizacao(banco) {
     if (e) {
       e.ultimoErro = err.message;
       e.ultimaSincronizacao = new Date().toISOString();
+      e.varrendoDesde = '';
       try { await banco.salvar('replica', e); } catch (e2) { /* banco fora: o erro original já sobe */ }
     }
     return { status: 502, corpo: { ok: false, erro: err.message } };
