@@ -51,7 +51,8 @@ function desligada() {
 async function lerEstado(banco) {
   return (await banco.obter('replica', ID_ESTADO)) || {
     id: ID_ESTADO, driveId: 'pendente', deltaLink: '', proximoLink: '',
-    ultimaSincronizacao: '', itens: 0, ultimoErro: '', assinatura: null
+    indiceNaPagina: 0, ultimaSincronizacao: '', itens: 0, ultimoErro: '',
+    assinatura: null
   };
 }
 
@@ -123,6 +124,7 @@ async function executarSincronizacao(banco) {
       /* Marca a página ATUAL como ponto de retomada antes de processá-la:
          se o tempo acabar no meio dela, a próxima chamada recomeça por
          esta mesma página em vez de voltar ao início da biblioteca. */
+      const retomando = (e.proximoLink === url) ? (e.indiceNaPagina || 0) : 0;
       e.proximoLink = url;
       e.ultimoErro = '';
       await banco.salvar('replica', e);
@@ -141,8 +143,8 @@ async function executarSincronizacao(banco) {
         if (await banco.remover('replica', 'item-' + item.id)) resumo.removidos++;
       }
 
-      const LOTE = 25;
-      for (let i = 0; i < gravar.length; i += LOTE) {
+      const LOTE = 50;
+      for (let i = retomando; i < gravar.length; i += LOTE) {
         await Promise.all(gravar.slice(i, i + LOTE).map(item =>
           /* guardamos o essencial, não o arquivo: o SharePoint continua
              sendo a verdade sobre o conteúdo */
@@ -160,13 +162,21 @@ async function executarSincronizacao(banco) {
           })
         ));
         resumo.gravados += Math.min(LOTE, gravar.length - i);
-        /* estourou o orçamento no meio da página: para aqui. A página
-           inteira será refeita na próxima chamada, e refazer é inofensivo
-           porque gravar é upsert — o mesmo item duas vezes dá o mesmo
-           resultado. */
-        if (Date.now() - comeco > ORCAMENTO_MS) { resumo.parcial = true; break; }
+
+        /* Estourou o orçamento no meio da página: guarda em que item parou,
+           para a próxima chamada continuar daqui em vez de reescrever a
+           página inteira. Sem isto, com página grande, cada rodada gravava
+           mais de mil itens para render pouco mais de cem novos. */
+        if (Date.now() - comeco > ORCAMENTO_MS) {
+          resumo.parcial = true;
+          e.indiceNaPagina = i + LOTE;
+          await banco.salvar('replica', e);
+          break;
+        }
       }
       if (resumo.parcial) break;
+      /* página inteira concluída: o índice zera */
+      e.indiceNaPagina = 0;
 
       url = pagina['@odata.nextLink'] || '';
       deltaLink = pagina['@odata.deltaLink'] || deltaLink;
