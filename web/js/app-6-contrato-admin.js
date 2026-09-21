@@ -216,6 +216,23 @@ Object.assign(App, {
     (wizard.administradores||[]).forEach(a=>{ if(a.cpf) this.salvarPessoaNaBase(a.nome, a.cpf, a.endereco, a.contato); });
   },
   async submitProcesso(){
+    /* Um envio por vez. O botão só era travado DEPOIS de a gravação no banco
+       responder — e no plano Free a primeira chamada depois de um tempo
+       parado leva segundos para a função acordar. Nesse intervalo o botão
+       parecia não ter respondido, o segundo clique passava, e o processo
+       era criado duas vezes (aconteceu em 21/09/2026). */
+    if(this._enviandoProcesso) return;
+    this._enviandoProcesso = true;
+    const btnEnviar = document.getElementById('btnNext');
+    const rotuloEnviar = btnEnviar ? btnEnviar.textContent : '';
+    if(btnEnviar){ btnEnviar.disabled = true; btnEnviar.textContent = 'Enviando…'; }
+    const liberar = () => {
+      this._enviandoProcesso = false;
+      if(btnEnviar){ btnEnviar.disabled = false; btnEnviar.textContent = rotuloEnviar; }
+    };
+    /* erro inesperado no meio não pode deixar o botão travado até recarregar */
+    try{
+
     const licStates = LICENCIAMENTOS_ITEMS.map(item => wizard.licenciamentos[item.id] || {na:false, arquivo:null});
     const licDone = licStates.filter(s=>s.na || s.arquivo).length;
     const licStatus = licDone===0 ? "pendente" : (licDone===licStates.length ? "concluido" : "andamento");
@@ -258,22 +275,22 @@ Object.assign(App, {
     }
 
     if(GS2SP.disponivel()){
-      const btn = document.getElementById('btnNext');
-      const rotulo = btn ? btn.textContent : '';
-      if(btn){ btn.disabled = true; btn.textContent = 'Gravando no SharePoint…'; }
+      if(btnEnviar) btnEnviar.textContent = 'Gravando no SharePoint…';
       this.gravarProcessoNoSharePoint()
         .then(r => alert('Processo enviado! Ele já aparece em "Meus Processos" com status "Em análise".\n\n' + this.relatoGravacao(r)))
         .catch(e => alert('Processo registrado, mas a gravação no SharePoint falhou:\n\n' + (e && e.message || e)))
         .finally(() => {
-          if(btn){ btn.disabled = false; btn.textContent = rotulo; }
+          liberar();
           this.encerrarRascunhoDoEnvio(processoNovo);
           this.navigate('processos');
         });
       return;
     }
     alert(this.montarRelatorioSharePoint());
+    liberar();
     this.encerrarRascunhoDoEnvio(processoNovo);
     this.navigate('processos');
+    }catch(e){ liberar(); throw e; }
   },
 
   /* O rascunho é a ÚNICA cópia do que a pessoa digitou. Só pode ser
