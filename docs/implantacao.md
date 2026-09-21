@@ -299,28 +299,49 @@ lido continua na tela.
 
 ## Etapa 2 — réplica e conferência automática do SharePoint
 
-Já está escrita (`api/src/rotas/replica.js` e `api/src/graph.js`) e **desligada**.
-Ligar é dar identidade à API e virar uma chave.
+**Ligada em 19/09/2026** (`api/src/rotas/replica.js` e `api/src/graph.js`). A
+varredura inicial terminou em 21/09/2026 com 91.408 itens; daí em diante só o
+que muda é sincronizado.
 
 **Como funciona:** o SharePoint avisa por webhook que algo mudou (a notificação
 não diz *o quê*, só que mudou); a API então chama o **delta**, que devolve
-exatamente o que mudou desde a última vez. Uma varredura de hora em hora roda o
-mesmo delta como rede de segurança, porque notificação perdida não é recuperável.
+exatamente o que mudou desde a última vez.
 
-**Para ligar:**
+**Como foi ligada (e por que não do jeito que estava planejado):**
 
-1. Ative a **identidade gerenciada** da Function App.
-2. Conceda a ela **Sites.Selected** no Graph e, depois, permissão **de leitura
-   apenas** no site `/sites/clientes` (via PowerShell — o portal não oferece essa
-   concessão para Graph). Leitura basta: a escrita continua sendo delegada, feita
-   pelo navegador em nome da pessoa.
-3. Defina:
+1. **Identidade gerenciada não existe no plano Free** do Static Web Apps — a
+   tela Identidade pede upgrade para Standard. No lugar, um **registro de
+   aplicativo próprio** no Entra ID, com segredo:
+   `GS2 — Processos Societários (réplica SharePoint)`, separado do app de login
+   (o de login é público e continua sem segredo nenhum).
+2. Nesse app: **Permissões de API → Microsoft Graph → Permissões de aplicativo**
+   (não delegadas) → `Sites.Selected` → **conceder consentimento do
+   administrador**. Sem o consentimento o Graph responde 401.
+3. Permissão **de leitura apenas** no site `/sites/clientes`, concedida por REST
+   (`POST /sites/{site-id}/permissions`, `roles: ["read"]`) — o portal não oferece
+   essa concessão. O cmdlet `Connect-MgGraph -UseDeviceCode` falha em sessão não
+   interativa ("Erro ao gravar em um ouvinte"); o fluxo de código de dispositivo
+   feito à mão com `Invoke-RestMethod` funciona.
+4. Variáveis no Static Web App:
+   - `GS2_REPLICA_TENANT_ID`, `GS2_REPLICA_CLIENT_ID`, `GS2_REPLICA_CLIENT_SECRET`
+     — **nunca** `AZURE_CLIENT_ID`/`AZURE_CLIENT_SECRET`/`AZURE_TENANT_ID`: esses
+     nomes são lidos por qualquer `DefaultAzureCredential` do processo, inclusive
+     o do Cosmos quando `COSMOS_KEY` está vazio (ver `api/src/config.js`)
    - `GS2_REPLICA=1`
    - `GS2_WEBHOOK_URL=https://app.gs2negocios.com.br/api/webhook/sharepoint`
    - `GS2_WEBHOOK_CLIENT_STATE=` um segredo qualquer, longo e aleatório
-4. Chame `POST /api/replica/assinatura` (como administrador) para criar a
-   assinatura no Graph. A renovação passa a ser automática, toda segunda às 6h —
-   a assinatura de `driveItem` vale no máximo ~30 dias.
+5. `POST /api/replica/assinatura` (como administrador) cria a assinatura.
+6. `POST /api/replica/sincronizar` em laço até `parcial: false` faz a varredura
+   inicial. Cada chamada trabalha ~28s e guarda onde parou (a plataforma corta a
+   requisição em ~45s). Duas chamadas simultâneas recebem 409.
+
+> **A renovação da assinatura NÃO é automática.** `api/index.js` registra dois
+> temporizadores (varredura de hora em hora e renovação semanal), mas funções
+> gerenciadas do Static Web Apps só aceitam gatilho HTTP — eles nunca rodam. A
+> assinatura de `driveItem` vale no máximo ~30 dias e foi criada para 25: **a
+> atual vence por volta de 14/10/2026.** Renove antes chamando de novo
+> `POST /api/replica/assinatura`. Vencida, a réplica para de receber avisos em
+> silêncio (a última sincronização em `/api/replica/estado` para de avançar).
 
 `GET /api/replica/estado` mostra o deltaLink guardado, a última sincronização e o
 último erro.

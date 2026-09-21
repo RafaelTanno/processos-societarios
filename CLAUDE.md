@@ -239,9 +239,20 @@ link de compartilhamento criado pelo próprio SharePoint (com validade e escopo)
 releitura do Cartão CNPJ/QSA pela ficha do cliente. Em demonstração, cada um
 desses botões DIZ que é demonstração — nunca finge que fez.
 
+**Réplica do SharePoint ligada desde 19/09/2026** (etapa 2): espelho de ~91 mil
+itens no contêiner `replica`, atualizado por webhook. Três restrições da
+plataforma que moldaram o código e não devem ser "simplificadas":
+credencial por registro de aplicativo com segredo em `GS2_REPLICA_*` (o plano
+Free não tem identidade gerenciada, e nomes `AZURE_*` contaminariam o Cosmos);
+varredura retomável em rodadas de ~28s (a plataforma corta em ~45s); e o estado
+em partição fixa (`driveId: 'estado'`), porque trocar a chave de partição no
+Cosmos duplica o documento. **Os temporizadores de `api/index.js` não rodam** —
+função gerenciada do Static Web Apps só aceita HTTP — então a assinatura do
+webhook precisa ser renovada à mão (`POST /api/replica/assinatura`) antes de
+vencer; ver `docs/implantacao.md`, etapa 2.
+
 Ainda simulado: geração do `.docx` do contrato; JUCEMAT/REDESIM e RFB
-(acompanhamento manual, por decisão de segurança); réplica do SharePoint (escrita,
-desligada — ver `api/src/rotas/replica.js`). **Não existe mais "leitura
+(acompanhamento manual, por decisão de segurança). **Não existe mais "leitura
 automática" com valor inventado**: a etapa 4 do wizard mostrava nome e CNPJ de
 exemplo como se tivessem sido extraídos do anexo — saiu, e não volta.
 
